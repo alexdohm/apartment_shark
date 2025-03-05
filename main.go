@@ -12,18 +12,29 @@ func main() {
 	log.Println("starting project")
 	startGewobag()
 	startWbm()
-	//startDewego()
+	startHowoge()
 
 	select {}
 }
 
-// func startDewego() {} {
-//
-// }
+func startHowoge() {
+	howogeListings, err := listings.LoadListings(config.HowogeFile)
+	if err != nil {
+		log.Printf("Could not load gewobag listings: %v", err)
+	}
+
+	go func() {
+		for {
+			scraping.CheckHowoge(howogeListings)
+			time.Sleep(config.TimeBetweenCalls * time.Second)
+		}
+	}()
+}
+
 func startGewobag() {
 	gewobagListings, err := listings.LoadListings(config.GewobagFile)
 	if err != nil {
-		log.Fatalf("Could not load gewobag listings: %v", err)
+		log.Printf("Could not load gewobag listings: %v", err)
 	}
 
 	go func() {
@@ -37,7 +48,7 @@ func startGewobag() {
 func startWbm() {
 	wbmListings, err := listings.LoadListings(config.WbmFile)
 	if err != nil {
-		log.Fatalf("Could not load wbm listings: %v", err)
+		log.Printf("Could not load wbm listings: %v", err)
 	}
 
 	go func() {
