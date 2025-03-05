@@ -44,7 +44,7 @@ func CheckHowoge(seenListings map[string]bool) {
 	formData.Add("tx_howrealestate_json_list[kiez][]", "Neukölln")
 	req, err := http.NewRequest("POST", apiURL, strings.NewReader(formData.Encode()))
 	if err != nil {
-		log.Fatalf("Failed to create Howoge request: %v", err)
+		log.Printf("Failed to create Howoge request: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", "Mozilla/5.0")
@@ -53,14 +53,14 @@ func CheckHowoge(seenListings map[string]bool) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Failed to fetch Howoge listings: %v", err)
+		log.Printf("Failed to fetch Howoge listings: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// 6. Parse JSON response
 	var data HowogeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		log.Fatalf("Error parsing Howoge JSON response: %v", err)
+		log.Printf("Error parsing Howoge JSON response: %v", err)
 	}
 
 	// 7. Process listings

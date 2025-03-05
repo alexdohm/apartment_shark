@@ -24,7 +24,7 @@ func CheckWbm(seenListings map[string]bool) {
 	// 2. Parse HTML
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatalf("Error parsing HTML: %v", err)
+		log.Printf("Error parsing HTML: %v", err)
 	}
 
 	doc.Find("div.row.openimmo-search-list-item").Each(func(i int, s *goquery.Selection) {

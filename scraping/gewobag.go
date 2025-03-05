@@ -24,7 +24,7 @@ func CheckGewobag(seenListings map[string]bool) {
 	// 2. Parse HTML
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatalf("Error parsing HTML: %v", err)
+		log.Printf("Error parsing HTML: %v", err)
 	}
 
 	// for each article with ID like "post-1234"
