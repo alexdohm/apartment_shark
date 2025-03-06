@@ -13,8 +13,24 @@ func main() {
 	startGewobag()
 	startWbm()
 	startHowoge()
+	startDewego()
 
 	select {}
+}
+
+func startDewego() {
+	//not getting very many listings
+	dewegoListings, err := listings.LoadListings(config.DewegoFile)
+	if err != nil {
+		log.Printf("Could not load gewobag listings: %v", err)
+	}
+
+	go func() {
+		for {
+			scraping.CheckDewego(dewegoListings)
+			time.Sleep(config.TimeBetweenCalls * time.Second)
+		}
+	}()
 }
 
 func startHowoge() {

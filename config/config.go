@@ -20,7 +20,12 @@ const (
 
 // howoge
 const (
-	HowogeURL = "https://www.howoge.de/?type=999"
-	//HowogeURL  = "https://www.howoge.de/immobiliensuche/wohnungssuche.html?tx_howrealestate_json_list%5Bpage%5D=1&tx_howrealestate_json_list%5Blimit%5D=12&tx_howrealestate_json_list%5Blang%5D=&tx_howrealestate_json_list%5Bkiez%5D%5B%5D=Friedrichshain-Kreuzberg&tx_howrealestate_json_list%5Bkiez%5D%5B%5D=Neuk%C3%B6lln&tx_howrealestate_json_list%5Brooms%5D=1"
+	HowogeURL  = "https://www.howoge.de/?type=999"
 	HowogeFile = "apartment_hunter/listings/howoge.txt"
+)
+
+// dewego
+const (
+	DewegoURL  = "https://www.degewo.de/immosuche"
+	DewegoFile = "apartment_hunter/listings/dewego.txt"
 )
