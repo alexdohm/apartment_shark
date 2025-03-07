@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	dewegoState  = listings.NewScraperState()
-	howogeState  = listings.NewScraperState()
-	gewobagState = listings.NewScraperState()
-	wbmState     = listings.NewScraperState()
+	dewegoState       = listings.NewScraperState()
+	howogeState       = listings.NewScraperState()
+	gewobagState      = listings.NewScraperState()
+	wbmState          = listings.NewScraperState()
+	stadtUndLandState = listings.NewScraperState()
 )
 
 func main() {
@@ -25,8 +26,19 @@ func main() {
 	startHowoge()
 	startGewobag()
 	startWbm()
+	startStadtUndLand()
 
 	select {}
+}
+
+func startStadtUndLand() {
+	scraping.CheckStadtUndLand(stadtUndLandState, false)
+	go func() {
+		for {
+			time.Sleep(config.TimeBetweenCalls * time.Second)
+			scraping.CheckStadtUndLand(stadtUndLandState, true)
+		}
+	}()
 }
 
 func startDewego() {
