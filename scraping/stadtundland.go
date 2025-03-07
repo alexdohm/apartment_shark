@@ -41,7 +41,6 @@ type StadtUndLandResponse struct {
 }
 
 func CheckStadtUndLand(state *listings.ScraperState, sendTelegram bool) {
-	log.Println("starting stadt und land")
 	payload := map[string]interface{}{
 		"district": "Neukölln Nord",
 		"offset":   0,
@@ -80,6 +79,7 @@ func CheckStadtUndLand(state *listings.ScraperState, sendTelegram bool) {
 		if state.Exists(listingID) {
 			continue
 		}
+		log.Println("new Stadt Und Land post", listingID)
 		state.MarkAsSeen(listingID)
 
 		// Construct full address

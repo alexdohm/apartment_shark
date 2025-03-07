@@ -17,7 +17,8 @@ docker push "$IMAGE_NAME:$TAG"
 
 # Restart the Nomad job
 echo "Restarting Nomad job..."
-nomad job stop apartment-hunter || true
+nomad job stop projects.apartment-hunter || true
+sleep 5  # Wait a few seconds to allow push propagation
 nomad job run apartment-hunter.nomad
 
 echo "Deployment completed!"
