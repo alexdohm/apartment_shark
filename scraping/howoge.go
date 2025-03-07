@@ -48,19 +48,23 @@ func CheckHowoge(seenListings map[string]bool) {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", "Mozilla/5.0")
+	req.Header.Set("Referer", "https://www.howoge.de")
+	req.Header.Set("Origin", "https://www.howoge.de")
 
 	// Send the request
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Failed to fetch Howoge listings: %v", err)
+		log.Printf("Howoge: Failed to fetch Howoge listings: %v", err)
+		return
 	}
 	defer resp.Body.Close()
 
 	// 6. Parse JSON response
 	var data HowogeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		log.Printf("Error parsing Howoge JSON response: %v", err)
+		log.Printf("Howoge: Error parsing Howoge JSON response: %v", err)
+		return
 	}
 
 	// 7. Process listings
@@ -96,7 +100,6 @@ func CheckHowoge(seenListings map[string]bool) {
 			telegram.SendTelegramMessage(htmlMsg)
 
 			// Append listing to file
-			log.Println("appending", listing.ID)
 			listings.AppendListing(config.HowogeFile, strconv.Itoa(listing.ID))
 		}
 	}

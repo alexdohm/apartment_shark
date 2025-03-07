@@ -16,7 +16,7 @@ func CheckWbm(seenListings map[string]bool) {
 	// 1. Fetch Wbm page
 	resp, err := http.Get(config.WbmURL)
 	if err != nil {
-		log.Printf("Failed to wbm fetch page: %v", err)
+		log.Printf("WBM: Failed to fetch page: %v", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -24,7 +24,8 @@ func CheckWbm(seenListings map[string]bool) {
 	// 2. Parse HTML
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Printf("Error parsing HTML: %v", err)
+		log.Printf("WBM: Error parsing HTML: %v", err)
+		return
 	}
 
 	doc.Find("div.row.openimmo-search-list-item").Each(func(i int, s *goquery.Selection) {
@@ -72,11 +73,4 @@ func CheckWbm(seenListings map[string]bool) {
 			listings.AppendListing(config.WbmFile, postID)
 		}
 	})
-
-	//noOffersText := "LEIDER HABEN WIR DERZEIT KEINE VERFÜGBAREN ANGEBOTE"
-	//pageText := doc.Text()
-	//
-	//if !strings.Contains(strings.ToUpper(pageText), noOffersText) {
-	//	telegram.SendTelegramMessage(fmt.Sprintf("WBM has a new offer: %s", config.WbmURL))
-	//}
 }

@@ -16,7 +16,7 @@ func CheckGewobag(seenListings map[string]bool) {
 	// 1. Fetch Gewobag page
 	resp, err := http.Get(config.GewobagURL)
 	if err != nil {
-		log.Printf("Failed to gewobag fetch page: %v", err)
+		log.Printf("Gewobag: Failed to fetch page: %v", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -24,7 +24,8 @@ func CheckGewobag(seenListings map[string]bool) {
 	// 2. Parse HTML
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Printf("Error parsing HTML: %v", err)
+		log.Printf("Gewobag: Error parsing HTML: %v", err)
+		return
 	}
 
 	// for each article with ID like "post-1234"

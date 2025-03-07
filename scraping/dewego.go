@@ -3,6 +3,7 @@ package scraping
 import (
 	"apartmenthunter/config"
 	"apartmenthunter/listings"
+	"apartmenthunter/telegram"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io"
@@ -34,7 +35,7 @@ func CheckDewego(seenListings map[string]bool) {
 
 	req, err := http.NewRequest("POST", config.DewegoURL, strings.NewReader(formData.Encode()))
 	if err != nil {
-		log.Printf("Failed to create Dewego request: %v", err)
+		log.Printf("Dewego: Failed to create request: %v", err)
 		return
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -45,7 +46,7 @@ func CheckDewego(seenListings map[string]bool) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Failed to fetch Dewego listings: %v", err)
+		log.Printf("Dewego: Failed to fetch Dewego listings: %v", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -53,13 +54,14 @@ func CheckDewego(seenListings map[string]bool) {
 	// Read the entire response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Failed to read Dewego response: %v", err)
+		log.Printf("Dewego: Failed to read response: %v", err)
 		return
 	}
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(body)))
 	if err != nil {
-		log.Fatalf("Error parsing HTML: %v", err)
+		log.Printf("Dewego: Error parsing HTML: %v", err)
+		return
 	}
 
 	doc.Find("article[id^=immobilie-list-item]").Each(func(i int, s *goquery.Selection) {
@@ -108,8 +110,8 @@ func CheckDewego(seenListings map[string]bool) {
 			)
 
 			// 5. Send Telegram notification
-			log.Println(htmlMsg) //todo get the request right for location here
-			//telegram.SendTelegramMessage(htmlMsg)
+			//log.Println(htmlMsg) //todo get the request right for location here
+			telegram.SendTelegramMessage(htmlMsg)
 
 			//6. Append listing to file
 			listings.AppendListing(config.DewegoFile, postID)
