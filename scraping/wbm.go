@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func CheckWbm(seenListings map[string]bool) {
+func CheckWbm(state *listings.ScraperState, sendTelegram bool) {
 	// 1. Fetch Wbm page
 	resp, err := http.Get(config.WbmURL)
 	if err != nil {
@@ -33,8 +33,9 @@ func CheckWbm(seenListings map[string]bool) {
 		if !exists {
 			return // Skip if no data-id is found
 		}
-		if !seenListings[postID] { // If this listing is new
-			seenListings[postID] = true // Mark as seen
+		if !state.Exists(postID) { // If this listing is new
+			log.Println("new WBM post", postID)
+			state.MarkAsSeen(postID)
 
 			// Extract details
 			region := strings.TrimSpace(s.Find("div.area").Text())
@@ -66,11 +67,9 @@ func CheckWbm(seenListings map[string]bool) {
 				mapsLink, listingLink,
 			)
 
-			// 5. Send Telegram message
-			telegram.SendTelegramMessage(htmlMsg)
-
-			// 6. Append listing to file
-			listings.AppendListing(config.WbmFile, postID)
+			if sendTelegram {
+				telegram.SendTelegramMessage(htmlMsg)
+			}
 		}
 	})
 }

@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func CheckGewobag(seenListings map[string]bool) {
+func CheckGewobag(state *listings.ScraperState, sendTelegram bool) {
 	// 1. Fetch Gewobag page
 	resp, err := http.Get(config.GewobagURL)
 	if err != nil {
@@ -32,8 +32,9 @@ func CheckGewobag(seenListings map[string]bool) {
 	doc.Find("article[id^=post-]").Each(func(i int, s *goquery.Selection) {
 		postID, _ := s.Attr("id")
 
-		if !seenListings[postID] {
-			seenListings[postID] = true //add postID to the map
+		if !state.Exists(postID) {
+			log.Println("new Gewobag post", postID)
+			state.MarkAsSeen(postID)
 
 			// --- Extract listing details ---
 			region := strings.TrimSpace(s.Find("tr.angebot-region td").Text())
@@ -71,11 +72,9 @@ func CheckGewobag(seenListings map[string]bool) {
 				readMoreLink,
 			)
 
-			// 3. send message
-			telegram.SendTelegramMessage(htmlMsg)
-
-			// 4. Append listing to file
-			listings.AppendListing(config.GewobagFile, postID)
+			if sendTelegram {
+				telegram.SendTelegramMessage(htmlMsg)
+			}
 		}
 	})
 }

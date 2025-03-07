@@ -1,46 +1,40 @@
 package listings
 
 import (
-	"bufio"
 	"log"
-	"os"
-	"strings"
+	"sync"
 )
 
-// AppendListing writes a new line with the postID to the file
-func AppendListing(filename, postID string) {
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Printf("Failed to open file: %v", err)
-		return
-	}
-	defer f.Close()
+type ScraperState struct {
+	mu       sync.Mutex
+	listings map[string]bool
+}
 
-	if _, err := f.WriteString(postID + "\n"); err != nil {
-		log.Printf("Failed to write postID to file: %v", err)
+func NewScraperState() *ScraperState {
+	return &ScraperState{
+		listings: make(map[string]bool),
 	}
 }
 
-// LoadListings loads seen post IDs into a map
-func LoadListings(filename string) (map[string]bool, error) {
-	m := make(map[string]bool)
+// MarkAsSeen adds a listing ID to the map (thread-safe)
+func (s *ScraperState) MarkAsSeen(postID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.listings[postID] = true
+}
 
-	file, err := os.Open(filename)
-	if os.IsNotExist(err) {
-		//no file, so return empty map
-		return m, nil
-	} else if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+// Exists checks if a listing ID has already been processed (thread-safe)
+func (s *ScraperState) Exists(postID string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.listings[postID]
+}
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line != "" {
-			//mark the listing as being seen
-			m[line] = true
-		}
+func (s *ScraperState) PrintListings() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	log.Println("Listings:")
+	for postID := range s.listings {
+		log.Println(postID)
 	}
-	return m, scanner.Err()
 }

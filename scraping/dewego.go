@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func CheckDewego(seenListings map[string]bool) {
+func CheckDewego(state *listings.ScraperState, sendTelegram bool) {
 	formData := url.Values{
 		"tx_openimmo_immobilie[__referrer][@extension]":  {"Openimmo"},
 		"tx_openimmo_immobilie[__referrer][@controller]": {"Immobilie"},
@@ -65,10 +65,10 @@ func CheckDewego(seenListings map[string]bool) {
 	}
 
 	doc.Find("article[id^=immobilie-list-item]").Each(func(i int, s *goquery.Selection) {
-		postID, _ := s.Attr("id") // Get the unique listing ID
-
-		if !seenListings[postID] { // If this listing is new
-			seenListings[postID] = true // Mark as seen
+		postID, _ := s.Attr("id")
+		if !state.Exists(postID) {
+			log.Println("new Dewego post", postID)
+			state.MarkAsSeen(postID)
 
 			// Extract listing details
 			title := strings.TrimSpace(s.Find("h2.article__title").Text())
@@ -93,7 +93,6 @@ func CheckDewego(seenListings map[string]bool) {
 			encodedAddr := url.QueryEscape(address)
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
-			// 4. Format Telegram message
 			htmlMsg := fmt.Sprintf(`<b>New Dewego Listing</b>
 
 <b>Title:</b> %s
@@ -109,13 +108,10 @@ func CheckDewego(seenListings map[string]bool) {
 				mapsLink, link,
 			)
 
-			// 5. Send Telegram notification
-			//log.Println(htmlMsg) //todo get the request right for location here
-			telegram.SendTelegramMessage(htmlMsg)
-
-			//6. Append listing to file
-			listings.AppendListing(config.DewegoFile, postID)
+			if sendTelegram {
+				// todo there are multiple pages here
+				telegram.SendTelegramMessage(htmlMsg)
+			}
 		}
 	})
-
 }

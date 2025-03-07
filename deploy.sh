@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e               # Exit on error
+cd "$(dirname "$0")" # Go to script directory
+
+IMAGE_NAME="d.isotronic.de/project/apartmenthunter"
+TAG="latest"
+
+echo "Building Go binary..."
+GOOS=linux GOARCH=amd64 go build -o app .
+
+echo "Building Docker image..."
+docker build -t "$IMAGE_NAME:$TAG" .
+
+echo "Pushing Docker image..."
+docker push "$IMAGE_NAME:$TAG"
+
+# Restart the Nomad job
+echo "Restarting Nomad job..."
+nomad job stop apartment-hunter || true
+nomad job run apartment-hunter.nomad
+
+echo "Deployment completed!"
+

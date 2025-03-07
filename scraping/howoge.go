@@ -30,7 +30,7 @@ type HowogeResponse struct {
 	Results []HowogeListing `json:"immoobjects"`
 }
 
-func CheckHowoge(seenListings map[string]bool) {
+func CheckHowoge(state *listings.ScraperState, sendTelegram bool) {
 	// 1. Define the Howoge API URL and create form data
 	apiURL := config.HowogeURL
 	formData := url.Values{
@@ -69,8 +69,9 @@ func CheckHowoge(seenListings map[string]bool) {
 
 	// 7. Process listings
 	for _, listing := range data.Results {
-		if !seenListings[strconv.Itoa(listing.ID)] && listing.Wbs != "ja" {
-			seenListings[strconv.Itoa(listing.ID)] = true
+		if !state.Exists(strconv.Itoa(listing.ID)) && listing.Wbs != "ja" {
+			log.Println("new howoge post", strconv.Itoa(listing.ID))
+			state.MarkAsSeen(strconv.Itoa(listing.ID))
 
 			// Google Maps link
 			encodedAddr := url.QueryEscape(listing.Title)
@@ -96,11 +97,9 @@ func CheckHowoge(seenListings map[string]bool) {
 				listing.Rooms, mapsLink, listingLink,
 			)
 
-			// Send Telegram message
-			telegram.SendTelegramMessage(htmlMsg)
-
-			// Append listing to file
-			listings.AppendListing(config.HowogeFile, strconv.Itoa(listing.ID))
+			if sendTelegram {
+				telegram.SendTelegramMessage(htmlMsg)
+			}
 		}
 	}
 }

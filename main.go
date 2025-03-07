@@ -4,73 +4,67 @@ import (
 	"apartmenthunter/config"
 	"apartmenthunter/listings"
 	"apartmenthunter/scraping"
+	"apartmenthunter/telegram"
 	"log"
 	"time"
 )
 
+var (
+	dewegoState  = listings.NewScraperState()
+	howogeState  = listings.NewScraperState()
+	gewobagState = listings.NewScraperState()
+	wbmState     = listings.NewScraperState()
+)
+
 func main() {
 	log.Println("starting project")
+	htmlMsg := "<b>Apartment Hunter</b> is <i>starting...</i>"
+	telegram.SendTelegramMessage(htmlMsg)
+
+	startDewego()
+	startHowoge()
 	startGewobag()
 	startWbm()
-	startHowoge()
-	startDewego()
 
 	select {}
 }
 
 func startDewego() {
-	//not getting very many listings
-	dewegoListings, err := listings.LoadListings(config.DewegoFile)
-	if err != nil {
-		log.Printf("Could not load gewobag listings: %v", err)
-	}
-
+	scraping.CheckDewego(dewegoState, false)
 	go func() {
 		for {
-			scraping.CheckDewego(dewegoListings)
 			time.Sleep(config.TimeBetweenCalls * time.Second)
+			scraping.CheckDewego(dewegoState, true)
 		}
 	}()
 }
 
 func startHowoge() {
-	howogeListings, err := listings.LoadListings(config.HowogeFile)
-	if err != nil {
-		log.Printf("Could not load gewobag listings: %v", err)
-	}
-
+	scraping.CheckHowoge(howogeState, false)
 	go func() {
 		for {
-			scraping.CheckHowoge(howogeListings)
 			time.Sleep(config.TimeBetweenCalls * time.Second)
+			scraping.CheckHowoge(howogeState, true)
 		}
 	}()
 }
 
 func startGewobag() {
-	gewobagListings, err := listings.LoadListings(config.GewobagFile)
-	if err != nil {
-		log.Printf("Could not load gewobag listings: %v", err)
-	}
-
+	scraping.CheckGewobag(gewobagState, false)
 	go func() {
 		for {
-			scraping.CheckGewobag(gewobagListings)
 			time.Sleep(config.TimeBetweenCalls * time.Second)
+			scraping.CheckGewobag(gewobagState, true)
 		}
 	}()
 }
 
 func startWbm() {
-	wbmListings, err := listings.LoadListings(config.WbmFile)
-	if err != nil {
-		log.Printf("Could not load wbm listings: %v", err)
-	}
-
+	go scraping.CheckWbm(wbmState, false)
 	go func() {
 		for {
-			scraping.CheckWbm(wbmListings)
 			time.Sleep(config.TimeBetweenCalls * time.Second)
+			scraping.CheckWbm(wbmState, true)
 		}
 	}()
 }
