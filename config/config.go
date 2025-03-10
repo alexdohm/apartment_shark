@@ -3,7 +3,7 @@ package config
 const (
 	BotToken         = "7533179845:AAGS2FEsvPzyjwpdshzP2dTs3ctelCKcM80"
 	ChatID           = "1392436626"
-	TimeBetweenCalls = 10
+	TimeBetweenCalls = 20
 )
 
 // gewobag
