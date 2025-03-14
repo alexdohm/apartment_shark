@@ -6,6 +6,7 @@ import (
 	"apartmenthunter/scraping"
 	"apartmenthunter/telegram"
 	"log"
+	"math/rand"
 	"time"
 )
 
@@ -31,11 +32,16 @@ func main() {
 	select {}
 }
 
+func generateRandomJitterTime() time.Duration {
+	// Add some randomness to the time between calls +- 30 seconds
+	return time.Duration(rand.Intn(config.TimeBetweenCalls)+30) * time.Second
+}
+
 func startStadtUndLand() {
 	scraping.CheckStadtUndLand(stadtUndLandState, false)
 	go func() {
 		for {
-			time.Sleep(config.TimeBetweenCalls * time.Second)
+			time.Sleep(generateRandomJitterTime())
 			scraping.CheckStadtUndLand(stadtUndLandState, true)
 		}
 	}()
@@ -45,7 +51,7 @@ func startDewego() {
 	scraping.CheckDewego(dewegoState, false)
 	go func() {
 		for {
-			time.Sleep(config.TimeBetweenCalls * time.Second)
+			time.Sleep(generateRandomJitterTime())
 			scraping.CheckDewego(dewegoState, true)
 		}
 	}()
@@ -55,7 +61,7 @@ func startHowoge() {
 	scraping.CheckHowoge(howogeState, false)
 	go func() {
 		for {
-			time.Sleep(config.TimeBetweenCalls * time.Second)
+			time.Sleep(generateRandomJitterTime())
 			scraping.CheckHowoge(howogeState, true)
 		}
 	}()
@@ -65,7 +71,7 @@ func startGewobag() {
 	scraping.CheckGewobag(gewobagState, false)
 	go func() {
 		for {
-			time.Sleep(config.TimeBetweenCalls * time.Second)
+			time.Sleep(generateRandomJitterTime())
 			scraping.CheckGewobag(gewobagState, true)
 		}
 	}()
@@ -75,7 +81,7 @@ func startWbm() {
 	go scraping.CheckWbm(wbmState, false)
 	go func() {
 		for {
-			time.Sleep(config.TimeBetweenCalls * time.Second)
+			time.Sleep(generateRandomJitterTime())
 			scraping.CheckWbm(wbmState, true)
 		}
 	}()
