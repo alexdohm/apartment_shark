@@ -48,44 +48,25 @@ func CheckGewobag(state *store.ScraperState, sendTelegram bool) {
 			log.Println("new Gewobag post", postID)
 			state.MarkAsSeen(postID)
 
-			// --- Extract listing details ---
-			region := strings.TrimSpace(s.Find("tr.angebot-region td").Text())
 			addressText := strings.TrimSpace(s.Find("tr.angebot-address td address").Text())
-			titleText := strings.TrimSpace(s.Find("tr.angebot-address td h3.angebot-title").Text())
 			area := strings.TrimSpace(s.Find("tr.angebot-area td").Text())
-			availability := strings.TrimSpace(s.Find("tr.availability td").Text())
 			cost := strings.TrimSpace(s.Find("tr.angebot-kosten td").Text())
 
-			// The "read more" link
-			readMoreLink, found := s.Find("a.read-more-link").Attr("href")
+			listingLink, found := s.Find("a.read-more-link").Attr("href")
 			if !found {
-				readMoreLink = "no link found"
+				listingLink = "no link found"
 			}
-
-			// Build Google Maps link from address
 			encodedAddr := url.QueryEscape(addressText)
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
-			// --- Build HTML message ---
-			htmlMsg := fmt.Sprintf(`<b>Gewobag</b>
-
-<b>Region:</b> %s
-<b>Titel:</b> %s
-<b>Größe:</b> %s
-<b>Verfügbarkeit:</b> %s
-<b>Kosten:</b> %s
-
-<b>Adresse:</b> %s
-<a href="%s">View in google maps</a>
-
-<a href="%s">Link to apply</a>`,
-				region, titleText, area, availability, cost,
-				addressText, mapsLink,
-				readMoreLink,
-			)
-
 			if sendTelegram {
-				telegram.SendTelegramMessage(htmlMsg)
+				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
+					Address:     encodedAddr,
+					Size:        area,
+					Rent:        cost,
+					MapLink:     mapsLink,
+					ListingLink: listingLink,
+				}, "Gewobag")
 			}
 		}
 	})

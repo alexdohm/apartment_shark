@@ -61,52 +61,34 @@ func CheckDewego(state *store.ScraperState, sendTelegram bool) {
 		log.Printf("Dewego: Error parsing HTML: %v", err)
 		return
 	}
+	// todo there might be multiple pages here
 	doc.Find("article[id^=immobilie-list-item]").Each(func(i int, s *goquery.Selection) {
 		postID, _ := s.Attr("id")
 		if !state.Exists(postID) {
 			state.MarkAsSeen(postID)
 
-			// Extract listing details
-			title := strings.TrimSpace(s.Find("h2.article__title").Text())
 			address := strings.TrimSpace(s.Find("span.article__meta").Text())
-
-			// Extract rooms, size, availability
-			rooms := strings.TrimSpace(s.Find("ul.article__properties li:nth-child(1) span.text").Text())
 			size := strings.TrimSpace(s.Find("ul.article__properties li:nth-child(2) span.text").Text())
-
-			// Extract price
-			price := strings.TrimSpace(s.Find("div.article__price-tag span.price").Text())
+			rent := strings.TrimSpace(s.Find("div.article__price-tag span.price").Text())
 
 			// Extract listing link
-			link, exists := s.Find("a[target=_blank]").Attr("href")
+			listingLink, exists := s.Find("a[target=_blank]").Attr("href")
 			if !exists {
-				link = "No link available"
+				listingLink = "No link available"
 			} else {
-				link = "https://www.degewo.de" + link // Make it a full URL
+				listingLink = "https://www.degewo.de" + listingLink
 			}
-
-			// Build Google Maps link from address
 			encodedAddr := url.QueryEscape(address)
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
-			htmlMsg := fmt.Sprintf(`<b>New Dewego Listing</b>
-
-<b>Title:</b> %s
-<b>Address:</b> %s
-<b>Rooms:</b> %s
-<b>Size:</b> %s
-<b>Rent:</b> %s
-
-<a href="%s">View in Google Maps</a>
-
-<a href="%s">View Listing</a>`,
-				title, address, rooms, size, price,
-				mapsLink, link,
-			)
-
 			if sendTelegram {
-				// todo there might be multiple pages here
-				telegram.SendTelegramMessage(htmlMsg)
+				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
+					Address:     encodedAddr,
+					Size:        size,
+					Rent:        rent,
+					MapLink:     mapsLink,
+					ListingLink: listingLink,
+				}, "Dewego")
 			}
 		}
 	})
