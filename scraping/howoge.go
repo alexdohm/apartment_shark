@@ -15,15 +15,13 @@ import (
 )
 
 type HowogeListing struct {
-	ID       int     `json:"uid"`
-	Title    string  `json:"title"`
-	District string  `json:"district"`
-	Rent     float64 `json:"rent"`
-	Area     float64 `json:"area"`
-	Rooms    int     `json:"rooms"`
-	Wbs      string  `json:"wbs"`
-	Link     string  `json:"link"`
-	Notice   string  `json:"notice"`
+	ID      int     `json:"uid"`
+	Address string  `json:"title"`
+	Rent    float64 `json:"rent"`
+	Size    float64 `json:"area"`
+	Wbs     string  `json:"wbs"`
+	Link    string  `json:"link"`
+	Notice  string  `json:"notice"`
 }
 
 // HowogeResponse Struct for API response
@@ -71,32 +69,18 @@ func CheckHowoge(state *store.ScraperState, sendTelegram bool) {
 			log.Println("new howoge post", strconv.Itoa(listing.ID))
 			state.MarkAsSeen(strconv.Itoa(listing.ID))
 
-			// Google Maps link
-			encodedAddr := url.QueryEscape(listing.Title)
+			encodedAddr := url.QueryEscape(listing.Address)
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
-
-			// Full listing link
 			listingLink := fmt.Sprintf("https://www.howoge.de%s", listing.Link)
 
-			// --- Format Telegram message ---
-			htmlMsg := fmt.Sprintf(`<b>Howoge Listing</b>
-
-<b>Notice:</b> %s
-<b>District:</b> %s
-<b>Adress:</b> %s
-<b>Rent:</b> %.2f €
-<b>Area:</b> %.2f m²
-<b>Rooms:</b> %d
-
-<a href="%s">View in Google Maps</a>
-
-<a href="%s">View Listing</a>`,
-				listing.Notice, listing.District, listing.Title, listing.Rent, listing.Area,
-				listing.Rooms, mapsLink, listingLink,
-			)
-
 			if sendTelegram {
-				telegram.SendTelegramMessage(htmlMsg)
+				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
+					Address:     encodedAddr,
+					Size:        fmt.Sprintf("%.2f", listing.Size),
+					Rent:        fmt.Sprintf("%.2f", listing.Rent),
+					MapLink:     mapsLink,
+					ListingLink: listingLink,
+				}, "Howoge")
 			}
 		}
 	}

@@ -8,6 +8,30 @@ import (
 	"net/url"
 )
 
+type TelegramInfo struct {
+	Address     string
+	Size        string
+	Rent        string
+	MapLink     string
+	ListingLink string
+}
+
+func GenerateTelegramMessage(info *TelegramInfo, site string) {
+	htmlMsg := fmt.Sprintf(`<b>%s Listing</b>
+
+<b>Address:</b> %s
+<b>Size:</b> %s m²
+<b>Rent:</b> %s €
+
+<a href="%s">View Map</a>
+
+<a href="%s">View Listing</a>`,
+
+		site, info.Address, info.Size, info.Rent, info.MapLink, info.ListingLink,
+	)
+	SendTelegramMessage(htmlMsg)
+}
+
 func SendTelegramMessage(htmlMessage string) {
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", config.BotToken)
 

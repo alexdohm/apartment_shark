@@ -49,38 +49,22 @@ func CheckWbm(state *store.ScraperState, sendTelegram bool) {
 			log.Println("new WBM post", postID)
 			state.MarkAsSeen(postID)
 
-			// Extract details
-			region := strings.TrimSpace(s.Find("div.area").Text())
 			address := strings.TrimSpace(s.Find("div.address").Text())
 			rent := strings.TrimSpace(s.Find("div.main-property-value.main-property-rent").Text())
 			size := strings.TrimSpace(s.Find("div.main-property-value.main-property-size").Text())
-			rooms := strings.TrimSpace(s.Find("div.main-property-value.main-property-rooms").Text())
 
-			// Google Maps link for address search
 			encodedAddr := url.QueryEscape(address)
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
-
-			// WBM listing link (assuming individual listings have unique links)
 			listingLink := fmt.Sprintf("%s#%s", config.WbmURL, postID)
 
-			// Format the Telegram message
-			htmlMsg := fmt.Sprintf(`<b>WBM Listing</b>
-
-<b>Region:</b> %s
-<b>Adresse:</b> %s
-<b>Miete:</b> %s
-<b>Größe:</b> %s
-<b>Zimmer:</b> %s
-
-<a href="%s">View in Google Maps</a>
-
-<a href="%s">View Listing</a>`,
-				region, address, rent, size, rooms,
-				mapsLink, listingLink,
-			)
-
 			if sendTelegram {
-				telegram.SendTelegramMessage(htmlMsg)
+				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
+					Address:     address,
+					Size:        size,
+					Rent:        rent,
+					MapLink:     mapsLink,
+					ListingLink: listingLink,
+				}, "WBM")
 			}
 		}
 	})

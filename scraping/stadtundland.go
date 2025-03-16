@@ -81,34 +81,23 @@ func CheckStadtUndLand(state *store.ScraperState, sendTelegram bool) {
 		log.Println("new Stadt Und Land post", listingID)
 		state.MarkAsSeen(listingID)
 
-		// Construct full address
 		fullAddress := fmt.Sprintf("%s %s, %s %s",
 			listing.Address.Street, listing.Address.HouseNumber, listing.Address.PostalCode, listing.Address.City)
 
-		// Construct listing link
 		encodedID := url.QueryEscape(listingID)
 		listingLink := fmt.Sprintf("https://stadtundland.de/wohnungssuche/%s", encodedID)
 
-		// Construct Google Maps link
 		encodedAddr := url.QueryEscape(fullAddress)
 		mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
-		// 6. Format Telegram Message
-		htmlMsg := fmt.Sprintf(`<b>Stadt und Land Listing</b>
-
-<b>Address:</b> %s
-<b>Size:</b> %s m²
-<b>Rent:</b> %s €
-
-<a href="%s">View Map</a>
-
-<a href="%s">View Listing</a>`,
-
-			fullAddress, listing.Details.Area, listing.Costs.Rent, mapsLink, listingLink,
-		)
-
 		if sendTelegram {
-			telegram.SendTelegramMessage(htmlMsg)
+			telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
+				Address:     fullAddress,
+				Size:        listing.Details.Area,
+				Rent:        listing.Costs.Rent,
+				MapLink:     mapsLink,
+				ListingLink: listingLink,
+			}, "Stadt Und Land")
 		}
 	}
 }

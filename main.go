@@ -22,11 +22,11 @@ func main() {
 	htmlMsg := "<b>Apartment Hunter</b> is <i>starting...</i>"
 	telegram.SendTelegramMessage(htmlMsg)
 
-	startGewobag()
-	startDewego()
+	//startGewobag()
+	//startDewego()
 	startHowoge()
-	startWbm()
-	startStadtUndLand()
+	//startWbm()
+	//startStadtUndLand()
 
 	select {}
 }
