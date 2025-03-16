@@ -1,8 +1,9 @@
 package scraping
 
 import (
+	"apartmenthunter/bot"
 	"apartmenthunter/config"
-	"apartmenthunter/listings"
+	"apartmenthunter/store"
 	"apartmenthunter/telegram"
 	"bytes"
 	"encoding/json"
@@ -40,11 +41,10 @@ type StadtUndLandResponse struct {
 	Listings []StadtUndLandListing `json:"data"`
 }
 
-func CheckStadtUndLand(state *listings.ScraperState, sendTelegram bool) {
+func CheckStadtUndLand(state *store.ScraperState, sendTelegram bool) {
 	payload := map[string]interface{}{
-		"district": "Neukölln Nord",
-		"offset":   0,
-		"cat":      "wohnung",
+		"offset": 0,
+		"cat":    "wohnung",
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
@@ -56,8 +56,7 @@ func CheckStadtUndLand(state *listings.ScraperState, sendTelegram bool) {
 		log.Printf("Stadt Und Land: Failed to create request: %v", err)
 		return
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Mozilla/5.0")
+	bot.GenerateGeneralRequestHeaders(req, "", "", false, true)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

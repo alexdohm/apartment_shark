@@ -1,8 +1,9 @@
 package scraping
 
 import (
+	"apartmenthunter/bot"
 	"apartmenthunter/config"
-	"apartmenthunter/listings"
+	"apartmenthunter/store"
 	"apartmenthunter/telegram"
 	"encoding/json"
 	"fmt"
@@ -30,8 +31,7 @@ type HowogeResponse struct {
 	Results []HowogeListing `json:"immoobjects"`
 }
 
-func CheckHowoge(state *listings.ScraperState, sendTelegram bool) {
-	// 1. Define the Howoge API URL and create form data
+func CheckHowoge(state *store.ScraperState, sendTelegram bool) {
 	apiURL := config.HowogeURL
 	formData := url.Values{
 		"tx_howrealestate_json_list[action]": {"immoList"},
@@ -42,14 +42,12 @@ func CheckHowoge(state *listings.ScraperState, sendTelegram bool) {
 	}
 	formData.Add("tx_howrealestate_json_list[kiez][]", "Friedrichshain-Kreuzberg")
 	formData.Add("tx_howrealestate_json_list[kiez][]", "Neukölln")
+
 	req, err := http.NewRequest("POST", apiURL, strings.NewReader(formData.Encode()))
 	if err != nil {
 		log.Printf("Failed to create Howoge request: %v", err)
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", "Mozilla/5.0")
-	req.Header.Set("Referer", "https://www.howoge.de")
-	req.Header.Set("Origin", "https://www.howoge.de")
+	bot.GenerateGeneralRequestHeaders(req, "", "", true, false)
 
 	// Send the request
 	client := &http.Client{}
@@ -60,14 +58,14 @@ func CheckHowoge(state *listings.ScraperState, sendTelegram bool) {
 	}
 	defer resp.Body.Close()
 
-	// 6. Parse JSON response
+	// Parse JSON response
 	var data HowogeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		log.Printf("Howoge: Error parsing Howoge JSON response: %v", err)
 		return
 	}
 
-	// 7. Process listings
+	// Process listings
 	for _, listing := range data.Results {
 		if !state.Exists(strconv.Itoa(listing.ID)) && listing.Wbs != "ja" {
 			log.Println("new howoge post", strconv.Itoa(listing.ID))

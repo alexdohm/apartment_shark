@@ -1,8 +1,9 @@
 package scraping
 
 import (
+	"apartmenthunter/bot"
 	"apartmenthunter/config"
-	"apartmenthunter/listings"
+	"apartmenthunter/store"
 	"apartmenthunter/telegram"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -12,16 +13,27 @@ import (
 	"strings"
 )
 
-func CheckGewobag(state *listings.ScraperState, sendTelegram bool) {
-	// 1. Fetch Gewobag page
-	resp, err := http.Get(config.GewobagURL)
+func CheckGewobag(state *store.ScraperState, sendTelegram bool) {
+	// Create HTTP client
+	client := &http.Client{}
+
+	// Create a new GET request
+	req, err := http.NewRequest("GET", config.GewobagURL, nil)
+	if err != nil {
+		log.Printf("Gewobag: Failed to create request: %v", err)
+		return
+	}
+	bot.GenerateGeneralRequestHeaders(req, "", "", false, false)
+
+	// Perform the request
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("Gewobag: Failed to fetch page: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	// 2. Parse HTML
+	// Parse HTML with goquery
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Printf("Gewobag: Error parsing HTML: %v", err)

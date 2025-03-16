@@ -1,8 +1,9 @@
 package scraping
 
 import (
+	"apartmenthunter/bot"
 	"apartmenthunter/config"
-	"apartmenthunter/listings"
+	"apartmenthunter/store"
 	"apartmenthunter/telegram"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -12,16 +13,27 @@ import (
 	"strings"
 )
 
-func CheckWbm(state *listings.ScraperState, sendTelegram bool) {
-	// 1. Fetch Wbm page
-	resp, err := http.Get(config.WbmURL)
+func CheckWbm(state *store.ScraperState, sendTelegram bool) {
+	// Create HTTP client
+	client := &http.Client{}
+
+	// Create a new GET request
+	req, err := http.NewRequest("GET", config.WbmURL, nil)
+	if err != nil {
+		log.Printf("WBM: Failed to create request: %v", err)
+		return
+	}
+	bot.GenerateGeneralRequestHeaders(req, "", "", false, false)
+
+	// Perform the request
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("WBM: Failed to fetch page: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	// 2. Parse HTML
+	// Parse HTML with goquery
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Printf("WBM: Error parsing HTML: %v", err)

@@ -1,8 +1,9 @@
 package scraping
 
 import (
+	"apartmenthunter/bot"
 	"apartmenthunter/config"
-	"apartmenthunter/listings"
+	"apartmenthunter/store"
 	"apartmenthunter/telegram"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -13,7 +14,7 @@ import (
 	"strings"
 )
 
-func CheckDewego(state *listings.ScraperState, sendTelegram bool) {
+func CheckDewego(state *store.ScraperState, sendTelegram bool) {
 	formData := url.Values{
 		"tx_openimmo_immobilie[__referrer][@extension]":  {"Openimmo"},
 		"tx_openimmo_immobilie[__referrer][@controller]": {"Immobilie"},
@@ -38,10 +39,7 @@ func CheckDewego(state *listings.ScraperState, sendTelegram bool) {
 		log.Printf("Dewego: Failed to create request: %v", err)
 		return
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", "Mozilla/5.0")
-	req.Header.Set("Referer", "https://www.degewo.de/immosuche")
-	req.Header.Set("Origin", "https://www.degewo.de")
+	bot.GenerateGeneralRequestHeaders(req, "https://www.degewo.de", "https://www.degewo.de/", true, false)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -63,11 +61,9 @@ func CheckDewego(state *listings.ScraperState, sendTelegram bool) {
 		log.Printf("Dewego: Error parsing HTML: %v", err)
 		return
 	}
-
 	doc.Find("article[id^=immobilie-list-item]").Each(func(i int, s *goquery.Selection) {
 		postID, _ := s.Attr("id")
 		if !state.Exists(postID) {
-			log.Println("new Dewego post", postID)
 			state.MarkAsSeen(postID)
 
 			// Extract listing details
@@ -109,7 +105,7 @@ func CheckDewego(state *listings.ScraperState, sendTelegram bool) {
 			)
 
 			if sendTelegram {
-				// todo there are multiple pages here
+				// todo there might be multiple pages here
 				telegram.SendTelegramMessage(htmlMsg)
 			}
 		}

@@ -1,4 +1,4 @@
-package listings
+package store
 
 import (
 	"log"
