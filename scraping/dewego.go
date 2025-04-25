@@ -21,7 +21,7 @@ func CheckDewego(state *store.ScraperState, sendTelegram bool) {
 		"tx_openimmo_immobilie[__referrer][@action]":     {"search"},
 		"tx_openimmo_immobilie[search]":                  {"search"},
 		"tx_openimmo_immobilie[page]":                    {"1"},
-		"tx_openimmo_immobilie[warmmiete_start]":         {"500"},
+		"tx_openimmo_immobilie[warmmiete_start]":         {"600"},
 		"tx_openimmo_immobilie[warmmiete_end]":           {"1000"},
 		"tx_openimmo_immobilie[wbsSozialwohnung]":        {"0"},
 		"tx_openimmo_immobilie[distance]":                {"1"},
@@ -32,7 +32,6 @@ func CheckDewego(state *store.ScraperState, sendTelegram bool) {
 	// Add multiple values for regional filters
 	formData.Add("tx_openimmo_immobilie[regionalerZusatz][]", "friedrichshain-kreuzberg")
 	formData.Add("tx_openimmo_immobilie[regionalerZusatz][]", "neukolln")
-	formData.Add("tx_openimmo_immobilie[regionalerZusatz][]", "tempelhof-schoneberg")
 
 	req, err := http.NewRequest("POST", config.DewegoURL, strings.NewReader(formData.Encode()))
 	if err != nil {
@@ -61,15 +60,28 @@ func CheckDewego(state *store.ScraperState, sendTelegram bool) {
 		log.Printf("Dewego: Error parsing HTML: %v", err)
 		return
 	}
-	// todo there might be multiple pages here
+
+	// currently i don't have access to zip codes on this page
 	doc.Find("article[id^=immobilie-list-item]").Each(func(i int, s *goquery.Selection) {
 		postID, _ := s.Attr("id")
 		if !state.Exists(postID) {
+			log.Println("new dewego post", postID)
 			state.MarkAsSeen(postID)
 
 			address := strings.TrimSpace(s.Find("span.article__meta").Text())
+			parts := strings.Split(address, "|")
+			street := strings.TrimSpace(parts[0])
+			neighborhood := ""
+			if len(parts) > 1 {
+				neighborhood = strings.TrimSpace(parts[1])
+			}
+			fullAddress := fmt.Sprintf("%s, %s, Berlin", street, neighborhood)
+
 			size := strings.TrimSpace(s.Find("ul.article__properties li:nth-child(2) span.text").Text())
+			size = strings.TrimSuffix(size, " m²")
+
 			rent := strings.TrimSpace(s.Find("div.article__price-tag span.price").Text())
+			rent = strings.TrimSuffix(rent, " €")
 
 			// Extract listing link
 			listingLink, exists := s.Find("a[target=_blank]").Attr("href")
@@ -78,12 +90,12 @@ func CheckDewego(state *store.ScraperState, sendTelegram bool) {
 			} else {
 				listingLink = "https://www.degewo.de" + listingLink
 			}
-			encodedAddr := url.QueryEscape(address)
+			encodedAddr := url.QueryEscape(fullAddress)
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
 			if sendTelegram {
 				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
-					Address:     encodedAddr,
+					Address:     address,
 					Size:        size,
 					Rent:        rent,
 					MapLink:     mapsLink,

@@ -1,16 +1,32 @@
 package config
 
+// telegram bot config
 const (
 	BotToken         = "7533179845:AAGS2FEsvPzyjwpdshzP2dTs3ctelCKcM80"
 	ChatID           = "1392436626"
 	TimeBetweenCalls = 20
 )
 
-// gewobag
+// state urls
 const (
-	GewobagURL      = "https://www.gewobag.de/fuer-mieter-und-mietinteressenten/mietangebote/?bezirke%5B%5D=friedrichshain-kreuzberg&bezirke%5B%5D=friedrichshain-kreuzberg-friedrichshain&bezirke%5B%5D=friedrichshain-kreuzberg-kreuzberg&bezirke%5B%5D=neukoelln&bezirke%5B%5D=neukoelln-britz&bezirke%5B%5D=neukoelln-buckow&bezirke%5B%5D=neukoelln-rudow&bezirke%5B%5D=tempelhof-schoeneberg&bezirke%5B%5D=tempelhof-schoeneberg-lichtenrade&bezirke%5B%5D=tempelhof-schoeneberg-mariendorf&bezirke%5B%5D=tempelhof-schoeneberg-marienfelde&bezirke%5B%5D=tempelhof-schoeneberg-schoeneberg&objekttyp%5B%5D=wohnung&gesamtmiete_von=&gesamtmiete_bis=1000&gesamtflaeche_von=45&gesamtflaeche_bis=&zimmer_von=&zimmer_bis=&keinwbs=1&sort-by="
+	GewobagURL      = "https://www.gewobag.de/fuer-mieter-und-mietinteressenten/mietangebote/?objekttyp%5B%5D=wohnung&gesamtmiete_von=&gesamtmiete_bis=&gesamtflaeche_von=&gesamtflaeche_bis=&zimmer_von=&zimmer_bis=&sort-by="
 	WbmURL          = "https://www.wbm.de/wohnungen-berlin/angebote/"
 	HowogeURL       = "https://www.howoge.de/?type=999"
 	DewegoURL       = "https://www.degewo.de/immosuche"
 	StadtUndLandURL = "https://d2396ha8oiavw0.cloudfront.net/sul-main/immoSearch"
+)
+
+// search filters
+var (
+	ZipCodes = []string{
+		"12043", "12045", "12047", "12049", "12051", "12053", "12055", "12059", // nk
+		"10243", "10245", "10247", // fhain
+		"10961", "10965", "10967", "10969", "10997", "10999", //xberg
+		"12435", // alt-treptow
+		"10179", // mitte
+	}
+	MinWarm = 600.0
+	MaxWarm = 1000.0
+	MinSqm  = 50.0
+	Wbs     = false
 )

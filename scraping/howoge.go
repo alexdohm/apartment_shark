@@ -36,10 +36,11 @@ func CheckHowoge(state *store.ScraperState, sendTelegram bool) {
 		"tx_howrealestate_json_list[page]":   {"1"},
 		"tx_howrealestate_json_list[limit]":  {"50"},
 		"tx_howrealestate_json_list[lang]":   {""},
-		"tx_howrealestate_json_list[rooms]":  {"1"},
 	}
 	formData.Add("tx_howrealestate_json_list[kiez][]", "Friedrichshain-Kreuzberg")
 	formData.Add("tx_howrealestate_json_list[kiez][]", "Neukölln")
+	formData.Add("tx_howrealestate_json_list[kiez][]", "Tempelhof-Schöneberg")
+	formData.Add("tx_howrealestate_json_list[kiez][]", "Treptow-Köpenick")
 
 	req, err := http.NewRequest("POST", apiURL, strings.NewReader(formData.Encode()))
 	if err != nil {
@@ -67,15 +68,15 @@ func CheckHowoge(state *store.ScraperState, sendTelegram bool) {
 	for _, listing := range data.Results {
 		if !state.Exists(strconv.Itoa(listing.ID)) && listing.Wbs != "ja" {
 			log.Println("new howoge post", strconv.Itoa(listing.ID))
-			state.MarkAsSeen(strconv.Itoa(listing.ID))
 
+			state.MarkAsSeen(strconv.Itoa(listing.ID))
 			encodedAddr := url.QueryEscape(listing.Address)
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 			listingLink := fmt.Sprintf("https://www.howoge.de%s", listing.Link)
 
-			if sendTelegram {
+			if sendTelegram && config.IsListingWithinFilter(listing.Address, config.ParseFloat(listing.Size), config.ParseFloat(listing.Rent)) {
 				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
-					Address:     encodedAddr,
+					Address:     listing.Address,
 					Size:        fmt.Sprintf("%.2f", listing.Size),
 					Rent:        fmt.Sprintf("%.2f", listing.Rent),
 					MapLink:     mapsLink,

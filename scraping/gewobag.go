@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -50,7 +51,14 @@ func CheckGewobag(state *store.ScraperState, sendTelegram bool) {
 
 			addressText := strings.TrimSpace(s.Find("tr.angebot-address td address").Text())
 			area := strings.TrimSpace(s.Find("tr.angebot-area td").Text())
+			size, ok := ExtractSize(area)
+			if !ok {
+				log.Println("Error extracting size", area)
+			}
+
 			cost := strings.TrimSpace(s.Find("tr.angebot-kosten td").Text())
+			cost = strings.TrimSuffix(cost, "€")
+			cost = strings.TrimPrefix(cost, "ab ")
 
 			listingLink, found := s.Find("a.read-more-link").Attr("href")
 			if !found {
@@ -59,10 +67,10 @@ func CheckGewobag(state *store.ScraperState, sendTelegram bool) {
 			encodedAddr := url.QueryEscape(addressText)
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
-			if sendTelegram {
+			if sendTelegram && config.IsListingWithinFilter(addressText, config.ParseFloat(size), config.ParseFloat(cost)) {
 				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
-					Address:     encodedAddr,
-					Size:        area,
+					Address:     addressText,
+					Size:        size,
 					Rent:        cost,
 					MapLink:     mapsLink,
 					ListingLink: listingLink,
@@ -70,4 +78,13 @@ func CheckGewobag(state *store.ScraperState, sendTelegram bool) {
 			}
 		}
 	})
+}
+
+func ExtractSize(input string) (string, bool) {
+	re := regexp.MustCompile(`\d{1,3},\d{1,2}`)
+	match := re.FindString(input)
+	if match == "" {
+		return "", false
+	}
+	return match, true
 }

@@ -51,7 +51,10 @@ func CheckWbm(state *store.ScraperState, sendTelegram bool) {
 
 			address := strings.TrimSpace(s.Find("div.address").Text())
 			rent := strings.TrimSpace(s.Find("div.main-property-value.main-property-rent").Text())
+			rent = strings.TrimSuffix(rent, " €")
+
 			size := strings.TrimSpace(s.Find("div.main-property-value.main-property-size").Text())
+			size = strings.TrimSuffix(size, " m²")
 
 			encodedAddr := url.QueryEscape(address)
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)

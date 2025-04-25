@@ -18,15 +18,16 @@ var (
 )
 
 func main() {
-	log.Println("starting project")
-	htmlMsg := "<b>Apartment Hunter</b> is <i>starting...</i>"
+	log.Println("starting apartment project")
+	htmlMsg := "<b>Apartment Hunter</b> is <i>running...</i>"
 	telegram.SendTelegramMessage(htmlMsg)
 
+	// load json config
 	startGewobag()
-	startDewego()
+	//startDewego()
 	startHowoge()
-	startWbm()
-	startStadtUndLand()
+	//startWbm()
+	//startStadtUndLand()
 
 	select {}
 }
