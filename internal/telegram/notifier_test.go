@@ -8,13 +8,6 @@ import (
 	"time"
 )
 
-// stub server that returns given status
-func newStubServer(status int) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(status)
-	}))
-}
-
 // tiny mock that satisfies interface
 type mockNotifier struct{ msgs []string }
 
