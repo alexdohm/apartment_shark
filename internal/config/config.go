@@ -2,6 +2,7 @@ package config
 
 // telegram bot config
 const (
+	BaseURL          = "https://api.telegram.org"
 	BotToken         = "7533179845:AAGS2FEsvPzyjwpdshzP2dTs3ctelCKcM80"
 	ChatID           = "1392436626"
 	TimeBetweenCalls = 20

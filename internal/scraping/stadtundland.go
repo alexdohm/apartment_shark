@@ -1,11 +1,12 @@
 package scraping
 
 import (
-	"apartmenthunter/bot"
-	"apartmenthunter/config"
-	"apartmenthunter/store"
-	"apartmenthunter/telegram"
+	"apartmenthunter/internal/bot"
+	"apartmenthunter/internal/config"
+	"apartmenthunter/internal/store"
+	"apartmenthunter/internal/telegram"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -41,7 +42,7 @@ type StadtUndLandResponse struct {
 	Listings []StadtUndLandListing `json:"data"`
 }
 
-func CheckStadtUndLand(state *store.ScraperState, sendTelegram bool) {
+func CheckStadtUndLand(ctx context.Context, state *store.ScraperState, sendTelegram bool) {
 	payload := map[string]interface{}{
 		"offset": 0,
 		"cat":    "wohnung",
@@ -91,13 +92,16 @@ func CheckStadtUndLand(state *store.ScraperState, sendTelegram bool) {
 		mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
 		if sendTelegram {
-			telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
+			err := telegram.Send(ctx, &telegram.TelegramInfo{
 				Address:     fullAddress,
 				Size:        listing.Details.Area,
 				Rent:        listing.Costs.Rent,
 				MapLink:     mapsLink,
 				ListingLink: listingLink,
 			}, "Stadt Und Land")
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 }

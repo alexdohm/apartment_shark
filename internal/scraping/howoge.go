@@ -1,10 +1,10 @@
 package scraping
 
 import (
-	"apartmenthunter/bot"
-	"apartmenthunter/config"
-	"apartmenthunter/store"
-	"apartmenthunter/telegram"
+	"apartmenthunter/internal/bot"
+	"apartmenthunter/internal/config"
+	"apartmenthunter/internal/store"
+	"apartmenthunter/internal/telegram"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -75,7 +75,8 @@ func CheckHowoge(state *store.ScraperState, sendTelegram bool) {
 			listingLink := fmt.Sprintf("https://www.howoge.de%s", listing.Link)
 
 			if sendTelegram && config.IsListingWithinFilter(listing.Address, config.ParseFloat(listing.Size), config.ParseFloat(listing.Rent)) {
-				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
+
+				telegram.Send(nil, &telegram.TelegramInfo{
 					Address:     listing.Address,
 					Size:        fmt.Sprintf("%.2f", listing.Size),
 					Rent:        fmt.Sprintf("%.2f", listing.Rent),

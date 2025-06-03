@@ -1,10 +1,10 @@
 package scraping
 
 import (
-	"apartmenthunter/bot"
-	"apartmenthunter/config"
-	"apartmenthunter/store"
-	"apartmenthunter/telegram"
+	"apartmenthunter/internal/bot"
+	"apartmenthunter/internal/config"
+	"apartmenthunter/internal/store"
+	"apartmenthunter/internal/telegram"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
@@ -61,7 +61,7 @@ func CheckWbm(state *store.ScraperState, sendTelegram bool) {
 			listingLink := fmt.Sprintf("%s#%s", config.WbmURL, postID)
 
 			if sendTelegram {
-				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
+				telegram.Send(nil, &telegram.TelegramInfo{
 					Address:     address,
 					Size:        size,
 					Rent:        rent,

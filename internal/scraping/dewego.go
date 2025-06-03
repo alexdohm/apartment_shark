@@ -1,10 +1,10 @@
 package scraping
 
 import (
-	"apartmenthunter/bot"
-	"apartmenthunter/config"
-	"apartmenthunter/store"
-	"apartmenthunter/telegram"
+	"apartmenthunter/internal/bot"
+	"apartmenthunter/internal/config"
+	"apartmenthunter/internal/store"
+	"apartmenthunter/internal/telegram"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io"
@@ -94,7 +94,7 @@ func CheckDewego(state *store.ScraperState, sendTelegram bool) {
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
 			if sendTelegram {
-				telegram.GenerateTelegramMessage(&telegram.TelegramInfo{
+				telegram.Send(nil, &telegram.TelegramInfo{
 					Address:     address,
 					Size:        size,
 					Rent:        rent,

@@ -1,7 +1,7 @@
 package bot
 
 import (
-	"apartmenthunter/config"
+	"apartmenthunter/internal/config"
 	"math/rand"
 	"time"
 )
