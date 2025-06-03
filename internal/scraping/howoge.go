@@ -5,6 +5,7 @@ import (
 	"apartmenthunter/internal/config"
 	"apartmenthunter/internal/store"
 	"apartmenthunter/internal/telegram"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -29,7 +30,7 @@ type HowogeResponse struct {
 	Results []HowogeListing `json:"immoobjects"`
 }
 
-func CheckHowoge(state *store.ScraperState, sendTelegram bool) {
+func CheckHowoge(ctx context.Context, state *store.ScraperState, sendTelegram bool) {
 	apiURL := config.HowogeURL
 	formData := url.Values{
 		"tx_howrealestate_json_list[action]": {"immoList"},
@@ -76,13 +77,16 @@ func CheckHowoge(state *store.ScraperState, sendTelegram bool) {
 
 			if sendTelegram && config.IsListingWithinFilter(listing.Address, config.ParseFloat(listing.Size), config.ParseFloat(listing.Rent)) {
 
-				telegram.Send(nil, &telegram.TelegramInfo{
+				err := telegram.Send(ctx, &telegram.TelegramInfo{
 					Address:     listing.Address,
 					Size:        fmt.Sprintf("%.2f", listing.Size),
 					Rent:        fmt.Sprintf("%.2f", listing.Rent),
 					MapLink:     mapsLink,
 					ListingLink: listingLink,
 				}, "Howoge")
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 	}

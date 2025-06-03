@@ -5,6 +5,7 @@ import (
 	"apartmenthunter/internal/config"
 	"apartmenthunter/internal/store"
 	"apartmenthunter/internal/telegram"
+	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io"
@@ -14,7 +15,7 @@ import (
 	"strings"
 )
 
-func CheckDewego(state *store.ScraperState, sendTelegram bool) {
+func CheckDewego(ctx context.Context, state *store.ScraperState, sendTelegram bool) {
 	formData := url.Values{
 		"tx_openimmo_immobilie[__referrer][@extension]":  {"Openimmo"},
 		"tx_openimmo_immobilie[__referrer][@controller]": {"Immobilie"},
@@ -94,13 +95,16 @@ func CheckDewego(state *store.ScraperState, sendTelegram bool) {
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
 			if sendTelegram {
-				telegram.Send(nil, &telegram.TelegramInfo{
+				err := telegram.Send(ctx, &telegram.TelegramInfo{
 					Address:     address,
 					Size:        size,
 					Rent:        rent,
 					MapLink:     mapsLink,
 					ListingLink: listingLink,
 				}, "Dewego")
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 	})

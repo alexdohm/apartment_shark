@@ -5,6 +5,7 @@ import (
 	"apartmenthunter/internal/config"
 	"apartmenthunter/internal/store"
 	"apartmenthunter/internal/telegram"
+	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
@@ -13,7 +14,7 @@ import (
 	"strings"
 )
 
-func CheckWbm(state *store.ScraperState, sendTelegram bool) {
+func CheckWbm(ctx context.Context, state *store.ScraperState, sendTelegram bool) {
 	// Create HTTP client
 	client := &http.Client{}
 
@@ -61,13 +62,16 @@ func CheckWbm(state *store.ScraperState, sendTelegram bool) {
 			listingLink := fmt.Sprintf("%s#%s", config.WbmURL, postID)
 
 			if sendTelegram {
-				telegram.Send(nil, &telegram.TelegramInfo{
+				err := telegram.Send(ctx, &telegram.TelegramInfo{
 					Address:     address,
 					Size:        size,
 					Rent:        rent,
 					MapLink:     mapsLink,
 					ListingLink: listingLink,
 				}, "WBM")
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 	})

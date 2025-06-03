@@ -8,16 +8,23 @@ import (
 	"apartmenthunter/internal/telegram"
 	"context"
 	"log"
+	"sync"
 	"time"
 )
 
-var (
-	dewegoState       = store.NewScraperState()
-	howogeState       = store.NewScraperState()
-	gewobagState      = store.NewScraperState()
-	wbmState          = store.NewScraperState()
-	stadtUndLandState = store.NewScraperState()
-)
+type ScraperConfig struct {
+	Name      string
+	State     *store.ScraperState
+	CheckFunc func(context.Context, *store.ScraperState, bool)
+}
+
+var scrapers = []ScraperConfig{
+	{"StadtUndLand", store.NewScraperState(), scraping.CheckStadtUndLand},
+	{"Dewego", store.NewScraperState(), scraping.CheckDewego},
+	{"Howoge", store.NewScraperState(), scraping.CheckHowoge},
+	{"Gewobag", store.NewScraperState(), scraping.CheckGewobag},
+	{"WBM", store.NewScraperState(), scraping.CheckWbm},
+}
 
 func main() {
 	log.Println("starting apartment project")
@@ -34,72 +41,42 @@ func main() {
 		log.Fatalf("error sending startup message: %v", err)
 	}
 
-	// load json config
-	//startGewobag(ctx)
-	//startDewego(ctx)
-	//startHowoge(ctx)
-	//startWbm(ctx)
-	startStadtUndLand(ctx)
+	startAllScrapers(ctx)
 
 	select {}
 }
 
-func startStadtUndLand(ctx context.Context) {
-	initCtx, initCancel := context.WithTimeout(ctx, 5*time.Second)
-	scraping.CheckStadtUndLand(initCtx, stadtUndLandState, false)
-	initCancel()
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				opCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-				scraping.CheckStadtUndLand(opCtx, stadtUndLandState, true)
-				cancel()
-				time.Sleep(bot.GenerateRandomJitterTime())
-			}
-		}
-	}()
+func startAllScrapers(ctx context.Context) {
+	var wg sync.WaitGroup
+	for _, scraper := range scrapers {
+		wg.Add(1)
+		go func(s ScraperConfig) {
+			defer wg.Done()
+			startScraper(ctx, s)
+		}(scraper)
+	}
 }
 
-//func startDewego() {
-//	scraping.CheckDewego(dewegoState, false)
-//	go func() {
-//		for {
-//			time.Sleep(bot.GenerateRandomJitterTime())
-//			scraping.CheckDewego(dewegoState, true)
-//		}
-//	}()
-//}
-//
-//func startHowoge() {
-//	scraping.CheckHowoge(howogeState, false)
-//	go func() {
-//		for {
-//			time.Sleep(bot.GenerateRandomJitterTime())
-//			scraping.CheckHowoge(howogeState, true)
-//		}
-//	}()
-//}
-//
-//func startGewobag() {
-//	scraping.CheckGewobag(gewobagState, false)
-//	go func() {
-//		for {
-//			time.Sleep(bot.GenerateRandomJitterTime())
-//			scraping.CheckGewobag(gewobagState, true)
-//		}
-//	}()
-//}
-//
-//func startWbm() {
-//	go scraping.CheckWbm(wbmState, false)
-//	go func() {
-//		for {
-//			time.Sleep(bot.GenerateRandomJitterTime())
-//			scraping.CheckWbm(wbmState, true)
-//		}
-//	}()
-//}
+func startScraper(ctx context.Context, conf ScraperConfig) {
+	log.Printf("starting scraper %s", conf.Name)
+
+	initCtx, initCancel := context.WithTimeout(ctx, 5*time.Second)
+	conf.CheckFunc(initCtx, conf.State, false)
+	initCancel()
+
+	log.Printf("%s scraper initialized", conf.Name)
+
+	// start monitoring for new listings
+	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("%s scraper stopped", conf.Name)
+			return
+		default:
+			time.Sleep(bot.GenerateRandomJitterTime())
+			opCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			conf.CheckFunc(opCtx, conf.State, true)
+			cancel()
+		}
+	}
+}

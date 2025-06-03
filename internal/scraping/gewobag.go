@@ -5,6 +5,7 @@ import (
 	"apartmenthunter/internal/config"
 	"apartmenthunter/internal/store"
 	"apartmenthunter/internal/telegram"
+	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
@@ -14,7 +15,7 @@ import (
 	"strings"
 )
 
-func CheckGewobag(state *store.ScraperState, sendTelegram bool) {
+func CheckGewobag(ctx context.Context, state *store.ScraperState, sendTelegram bool) {
 	// Create HTTP client
 	client := &http.Client{}
 
@@ -68,13 +69,16 @@ func CheckGewobag(state *store.ScraperState, sendTelegram bool) {
 			mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
 
 			if sendTelegram && config.IsListingWithinFilter(addressText, config.ParseFloat(size), config.ParseFloat(cost)) {
-				telegram.Send(nil, &telegram.TelegramInfo{
+				err := telegram.Send(ctx, &telegram.TelegramInfo{
 					Address:     addressText,
 					Size:        size,
 					Rent:        cost,
 					MapLink:     mapsLink,
 					ListingLink: listingLink,
 				}, "Gewobag")
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 	})
