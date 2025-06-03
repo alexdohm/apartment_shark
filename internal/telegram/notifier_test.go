@@ -25,7 +25,7 @@ func TestTelegramNotifier_OK(t *testing.T) {
 
 	ctx := context.Background()
 	if err := not.Send(ctx, "hi"); err != nil {
-		t.Fatalf("want nil err, got %v", err)
+		t.Errorf("want nil err, got %v", err)
 	}
 }
 
