@@ -5,8 +5,16 @@ import (
 	"sync"
 )
 
+type ScraperStore interface {
+	MarkAsSeen(string)
+	Exists(string) bool
+	PrintListings()
+	Size() int
+	Clear()
+}
+
 type ScraperState struct {
-	mu       sync.Mutex
+	mu       sync.RWMutex
 	listings map[string]bool
 }
 
@@ -37,4 +45,16 @@ func (s *ScraperState) PrintListings() {
 	for postID := range s.listings {
 		log.Println(postID)
 	}
+}
+
+func (s *ScraperState) Size() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.listings)
+}
+
+func (s *ScraperState) Clear() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.listings = make(map[string]bool)
 }
