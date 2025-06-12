@@ -5,6 +5,7 @@ import (
 	"apartmenthunter/internal/config"
 	"apartmenthunter/internal/http"
 	"apartmenthunter/internal/scraping/common"
+	"apartmenthunter/internal/scraping/factory"
 	"apartmenthunter/internal/store"
 	"apartmenthunter/internal/telegram"
 	"context"
@@ -15,6 +16,7 @@ import (
 
 var scrapersTypes = []string{
 	"Howoge",
+	"Dewego",
 }
 
 func main() {
@@ -33,14 +35,14 @@ func main() {
 	}
 
 	httpClient := http.NewClient(5 * time.Second)
-	scraperFactory := NewScraperFactory(httpClient)
+	scraperFactory := factory.NewScraperFactory(httpClient)
 
 	startAllScrapers(ctx, scraperFactory)
 
 	select {}
 }
 
-func startAllScrapers(ctx context.Context, factory *DefaultScraperFactory) {
+func startAllScrapers(ctx context.Context, factory *factory.DefaultScraperFactory) {
 	var wg sync.WaitGroup
 	for _, scraperType := range scrapersTypes {
 		wg.Add(1)

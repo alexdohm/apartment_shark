@@ -43,7 +43,7 @@ func Scrape(ctx context.Context, base *common.BaseScraper, sendTelegram bool) er
 
 func (s *scraperCtx) fetchListings(ctx context.Context) ([]HowogeListing, error) {
 	formData := s.buildFormData()
-	headers := s.HeaderGenerator.GenerateGeneralRequestHeaders("", "", true, false)
+	headers := s.HeaderGenerator.GenerateGeneralRequestHeaders("https://www.degewo.de", "https://www.degewo.de", true, false)
 
 	resp, err := s.HTTPClient.Post(ctx, config.HowogeURL, formData, headers)
 	if err != nil {

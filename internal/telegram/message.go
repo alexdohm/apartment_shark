@@ -1,6 +1,8 @@
 package telegram
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type TelegramInfo struct {
 	Address, Size, Rent, MapLink, ListingLink, Site string
@@ -14,7 +16,6 @@ func BuildHTML(info *TelegramInfo) string {
 <b>Rent:</b> %s €
 
 <a href="%s">View Map</a>
-
 <a href="%s">View Listing</a>`,
 
 		info.Site, info.Address, info.Size, info.Rent, info.MapLink, info.ListingLink,

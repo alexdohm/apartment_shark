@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -31,6 +32,7 @@ func Send(ctx context.Context, info *TelegramInfo) error {
 		return fmt.Errorf("default notifier has not been initialized")
 	}
 	msg := BuildHTML(info)
+	log.Println(msg)
 
 	return defaultNotifier.Send(ctx, msg)
 }

@@ -1,8 +1,9 @@
-package main
+package factory
 
 import (
 	"apartmenthunter/internal/http"
 	"apartmenthunter/internal/scraping/common"
+	"apartmenthunter/internal/scraping/dewego"
 	"apartmenthunter/internal/scraping/howoge"
 	"apartmenthunter/internal/store"
 )
@@ -26,6 +27,8 @@ func (f *DefaultScraperFactory) CreateScraper(scraperType string, state *store.S
 	switch scraperType {
 	case "Howoge":
 		return common.NewBaseScraper(f.httpClient, state, scraperType, howoge.Scrape)
+	case "Dewego":
+		return common.NewBaseScraper(f.httpClient, state, scraperType, dewego.Scrape)
 	default:
 		return nil
 	}
