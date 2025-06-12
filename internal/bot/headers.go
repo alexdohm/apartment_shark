@@ -2,7 +2,6 @@ package bot
 
 import (
 	"math/rand"
-	"net/http"
 )
 
 var userAgents = []string{
@@ -14,24 +13,33 @@ var userAgents = []string{
 	"Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36",
 }
 
-func GetRandomUserAgent() string {
+type HeaderGenerator struct{}
+
+func NewHeaderGenerator() *HeaderGenerator {
+	return &HeaderGenerator{}
+}
+
+func (h *HeaderGenerator) getRandomUserAgent() string {
 	return userAgents[rand.Intn(len(userAgents))]
 }
 
 // GenerateGeneralRequestHeaders generate headers to help evade bot checks
 // only set origin if cross-origin post request, or ajax request
-func GenerateGeneralRequestHeaders(req *http.Request, origin, referer string, formEncodedPost bool, jsonPost bool) {
-	req.Header.Set("User-Agent", GetRandomUserAgent())
+func (h *HeaderGenerator) GenerateGeneralRequestHeaders(origin, referer string, formEncodedPost bool, jsonPost bool) map[string]string {
+	headers := make(map[string]string)
+	headers["User-Agent"] = h.getRandomUserAgent()
 	if origin != "" {
-		req.Header.Set("Origin", origin)
+		headers["Origin"] = origin
 	}
 	if referer != "" {
-		req.Header.Set("Referer", referer)
+		headers["Referer"] = referer
 	}
 	if formEncodedPost {
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		headers["Content-Type"] = "application/x-www-form-urlencoded"
 	}
 	if jsonPost {
-		req.Header.Set("Content-Type", "application/json")
+		headers["Content-Type"] = "application/json"
+		headers["Accept"] = "application/json"
 	}
+	return headers
 }

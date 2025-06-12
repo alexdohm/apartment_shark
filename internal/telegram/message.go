@@ -3,10 +3,10 @@ package telegram
 import "fmt"
 
 type TelegramInfo struct {
-	Address, Size, Rent, MapLink, ListingLink string
+	Address, Size, Rent, MapLink, ListingLink, Site string
 }
 
-func BuildHTML(info *TelegramInfo, site string) string {
+func BuildHTML(info *TelegramInfo) string {
 	return fmt.Sprintf(`<b>%s Listing</b>
 
 <b>Address:</b> %s
@@ -17,6 +17,6 @@ func BuildHTML(info *TelegramInfo, site string) string {
 
 <a href="%s">View Listing</a>`,
 
-		site, info.Address, info.Size, info.Rent, info.MapLink, info.ListingLink,
+		info.Site, info.Address, info.Size, info.Rent, info.MapLink, info.ListingLink,
 	)
 }

@@ -26,11 +26,11 @@ func Init(base string, token string, chatID string) error {
 	return initError
 }
 
-func Send(ctx context.Context, info *TelegramInfo, site string) error {
+func Send(ctx context.Context, info *TelegramInfo) error {
 	if defaultNotifier == nil {
 		return fmt.Errorf("default notifier has not been initialized")
 	}
-	msg := BuildHTML(info, site)
+	msg := BuildHTML(info)
 
 	return defaultNotifier.Send(ctx, msg)
 }

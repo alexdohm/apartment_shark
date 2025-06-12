@@ -45,9 +45,10 @@ func TestSend_NotInitialized(t *testing.T) {
 		Rent:        "500",
 		MapLink:     "some link",
 		ListingLink: "some link",
+		Site:        "test site",
 	}
 
-	err := Send(context.Background(), info, "test site")
+	err := Send(context.Background(), info)
 	if err == nil {
 		t.Errorf("Send() error expected but got nil")
 	}
@@ -73,9 +74,10 @@ func TestSend_Success(t *testing.T) {
 		Rent:        "500",
 		MapLink:     "some link",
 		ListingLink: "some link",
+		Site:        "some site",
 	}
 
-	err = Send(context.Background(), info, "some site")
+	err = Send(context.Background(), info)
 	if err != nil {
 		t.Errorf("unexpected error sending: %v", err)
 	}
@@ -98,8 +100,9 @@ func TestSend_HTTPError(t *testing.T) {
 		Rent:        "200",
 		MapLink:     "someLink",
 		ListingLink: "anotherLink",
+		Site:        "TestSite",
 	}
-	err = Send(context.Background(), info, "TestSite")
+	err = Send(context.Background(), info)
 	if err == nil {
 		t.Error("Expected bad request but got nil")
 	}

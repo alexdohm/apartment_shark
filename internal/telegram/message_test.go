@@ -20,8 +20,8 @@ func TestBuildHTML(t *testing.T) {
 				Rent:        "800",
 				MapLink:     "https://www.google.com/maps/place/Kienitzer+Str.+24,+12053+Berlin/",
 				ListingLink: "google.com",
+				Site:        "StadtUndLand",
 			},
-			site: "StadtUndLand",
 			expected: `<b>StadtUndLand Listing</b>
 
 <b>Address:</b> Kienitzer Str. 24, 12053 Berlin
@@ -40,8 +40,8 @@ func TestBuildHTML(t *testing.T) {
 				Rent:        "",
 				MapLink:     "",
 				ListingLink: "",
+				Site:        "Test",
 			},
-			site: "Test",
 			expected: `<b>Test Listing</b>
 
 <b>Address:</b> 
@@ -60,8 +60,8 @@ func TestBuildHTML(t *testing.T) {
 				Rent:        "800",
 				MapLink:     "https://www.google.com/maps/place/Kienitzer+Str.+24,+12053+Berlin/",
 				ListingLink: "google.com",
+				Site:        "Gewobag",
 			},
-			site: "Gewobag",
 			expected: `<b>Gewobag Listing</b>
 
 <b>Address:</b> Käthe Str. 24, 12053 Berlin
@@ -75,7 +75,6 @@ func TestBuildHTML(t *testing.T) {
 		{
 			name:     "nil info struct",
 			info:     nil, // this will cause site to panic
-			site:     "Test",
 			expected: ``,
 		},
 	}
@@ -88,11 +87,11 @@ func TestBuildHTML(t *testing.T) {
 						t.Errorf("BuildHTML() should panic with nil info, but didnt")
 					}
 				}()
-				BuildHTML(tt.info, tt.site)
+				BuildHTML(tt.info)
 				return
 			}
 
-			result := BuildHTML(tt.info, tt.site)
+			result := BuildHTML(tt.info)
 			if result != tt.expected {
 				t.Errorf("BuildHTML() mismatch:\nGot\n%s\n\nExpected\n%s\n", result, tt.expected)
 			}
@@ -107,9 +106,9 @@ func TestBuildHTML_ContainsExpectedElements(t *testing.T) {
 		Rent:        "400",
 		MapLink:     "maps.google.com",
 		ListingLink: "google.com",
+		Site:        "Test Site",
 	}
-	site := "Test Site"
-	result := BuildHTML(info, site)
+	result := BuildHTML(info)
 
 	expectedElements := []string{
 		"<b>Test Site Listing</b>",
@@ -134,9 +133,9 @@ func TestBuildHTML_HTMLStructure(t *testing.T) {
 		Rent:        "400",
 		MapLink:     "maps.google.com",
 		ListingLink: "google.com",
+		Site:        "Test Site",
 	}
-	site := "Test Site"
-	result := BuildHTML(info, site)
+	result := BuildHTML(info)
 
 	if !strings.HasPrefix(result, "<b>Test Site Listing</b>") {
 		t.Errorf("BuildHTML() - Header must be bold with site name")
@@ -160,12 +159,12 @@ func BenchmarkBuildHTML(b *testing.B) {
 		Rent:        "400",
 		MapLink:     "maps.google.com",
 		ListingLink: "google.com",
+		Site:        "Gewobag",
 	}
-	site := "Gewobag"
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		BuildHTML(info, site)
+		BuildHTML(info)
 	}
 
 }

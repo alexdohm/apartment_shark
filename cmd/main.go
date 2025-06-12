@@ -3,7 +3,8 @@ package main
 import (
 	"apartmenthunter/internal/bot"
 	"apartmenthunter/internal/config"
-	"apartmenthunter/internal/scraping"
+	"apartmenthunter/internal/http"
+	"apartmenthunter/internal/scraping/common"
 	"apartmenthunter/internal/store"
 	"apartmenthunter/internal/telegram"
 	"context"
@@ -12,18 +13,8 @@ import (
 	"time"
 )
 
-type ScraperConfig struct {
-	Name      string
-	State     *store.ScraperState
-	CheckFunc func(context.Context, *store.ScraperState, bool)
-}
-
-var scrapers = []ScraperConfig{
-	{"StadtUndLand", store.NewScraperState(), scraping.CheckStadtUndLand},
-	{"Dewego", store.NewScraperState(), scraping.CheckDewego},
-	{"Howoge", store.NewScraperState(), scraping.CheckHowoge},
-	{"Gewobag", store.NewScraperState(), scraping.CheckGewobag},
-	{"WBM", store.NewScraperState(), scraping.CheckWbm},
+var scrapersTypes = []string{
+	"Howoge",
 }
 
 func main() {
@@ -41,42 +32,56 @@ func main() {
 		log.Fatalf("error sending startup message: %v", err)
 	}
 
-	startAllScrapers(ctx)
+	httpClient := http.NewClient(5 * time.Second)
+	scraperFactory := NewScraperFactory(httpClient)
+
+	startAllScrapers(ctx, scraperFactory)
 
 	select {}
 }
 
-func startAllScrapers(ctx context.Context) {
+func startAllScrapers(ctx context.Context, factory *DefaultScraperFactory) {
 	var wg sync.WaitGroup
-	for _, scraper := range scrapers {
+	for _, scraperType := range scrapersTypes {
 		wg.Add(1)
-		go func(s ScraperConfig) {
+		scraper := factory.CreateScraper(scraperType, store.NewScraperState())
+		if scraper == nil {
+			log.Printf("unknown scraper type: %s", scraperType)
+			wg.Done()
+			continue
+		}
+
+		// start scraper in its own go routine
+		go func(s common.Scraper) {
 			defer wg.Done()
 			startScraper(ctx, s)
 		}(scraper)
 	}
 }
 
-func startScraper(ctx context.Context, conf ScraperConfig) {
-	log.Printf("starting scraper %s", conf.Name)
+func startScraper(ctx context.Context, scraper common.Scraper) {
+	name := scraper.GetName()
+	log.Printf("starting scraper %s", name)
 
-	initCtx, initCancel := context.WithTimeout(ctx, 5*time.Second)
-	conf.CheckFunc(initCtx, conf.State, false)
-	initCancel()
+	err := scraper.Scrape(ctx, false)
+	if err != nil {
+		log.Printf("error during initial scrape for %s: %v", name, err)
+	}
 
-	log.Printf("%s scraper initialized", conf.Name)
+	log.Printf("%s scraper initialized", name)
 
 	// start monitoring for new listings
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("%s scraper stopped", conf.Name)
+			log.Printf("%s scraper stopped", name)
 			return
 		default:
 			time.Sleep(bot.GenerateRandomJitterTime())
-			opCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			conf.CheckFunc(opCtx, conf.State, true)
-			cancel()
+			err := scraper.Scrape(ctx, true)
+			if err != nil {
+				log.Printf("error during initial scrape for %s: %v", name, err)
+			}
 		}
 	}
 }
