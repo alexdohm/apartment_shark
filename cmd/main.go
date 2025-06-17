@@ -17,6 +17,7 @@ import (
 var scrapersTypes = []string{
 	"Howoge",
 	"Dewego",
+	"Gewobag",
 }
 
 func main() {

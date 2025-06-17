@@ -10,7 +10,7 @@ const (
 
 // state urls
 const (
-	GewobagURL      = "https://www.gewobag.de/fuer-mieter-und-mietinteressenten/mietangebote/?objekttyp%5B%5D=wohnung&gesamtmiete_von=&gesamtmiete_bis=&gesamtflaeche_von=&gesamtflaeche_bis=&zimmer_von=&zimmer_bis=&sort-by="
+	GewobagURL      = "https://www.gewobag.de/fuer-mietinteressentinnen/mietangebote/?objekttyp%5B%5D=wohnung&gesamtmiete_von=&gesamtmiete_bis=&gesamtflaeche_von=&gesamtflaeche_bis=&zimmer_von=&zimmer_bis=&sort-by="
 	WbmURL          = "https://www.wbm.de/wohnungen-berlin/angebote/"
 	HowogeURL       = "https://www.howoge.de/?type=999"
 	DewegoURL       = "https://www.degewo.de/immosuche"
