@@ -15,10 +15,10 @@ import (
 )
 
 var scrapersTypes = []string{
-	//"Howoge",
-	//"Dewego",
-	//"Gewobag",
-	//"StadtUndLand",
+	"Howoge",
+	"Dewego",
+	"Gewobag",
+	"StadtUndLand",
 	"WBM",
 }
 
