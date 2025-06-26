@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 type HTTPClient interface {
 	Get(ctx context.Context, url string, headers map[string]string) (*HTTPResponse, error)
 	Post(ctx context.Context, url string, formData map[string][]string, headers map[string]string) (*HTTPResponse, error)
+	PostJSON(ctx context.Context, url string, jsonBody []byte, headers map[string]string) (*HTTPResponse, error)
 }
 
 type HTTPResponse struct {
@@ -61,6 +63,18 @@ func (c *Client) Post(ctx context.Context, reqURL string, formData map[string][]
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}
+	return c.doRequest(req)
+}
+
+func (c *Client) PostJSON(ctx context.Context, reqURL string, jsonBody []byte, headers map[string]string) (*HTTPResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, fmt.Errorf("error creating JSON POST request: %w", err)
+	}
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
 	return c.doRequest(req)
 }
 

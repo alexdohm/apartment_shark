@@ -18,6 +18,7 @@ var scrapersTypes = []string{
 	"Howoge",
 	"Dewego",
 	"Gewobag",
+	"StadtUndLand",
 }
 
 func main() {
@@ -83,7 +84,7 @@ func startScraper(ctx context.Context, scraper common.Scraper) {
 			time.Sleep(bot.GenerateRandomJitterTime())
 			err := scraper.Scrape(ctx, true)
 			if err != nil {
-				log.Printf("error during initial scrape for %s: %v", name, err)
+				log.Printf("error during scrape for %s: %v", name, err)
 			}
 		}
 	}
