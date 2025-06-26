@@ -3,10 +3,11 @@ package factory
 import (
 	"apartmenthunter/internal/http"
 	"apartmenthunter/internal/scraping/common"
-	"apartmenthunter/internal/scraping/dewego"
-	"apartmenthunter/internal/scraping/gewobag"
-	"apartmenthunter/internal/scraping/howoge"
-	"apartmenthunter/internal/scraping/stadtundland"
+	"apartmenthunter/internal/scraping/companies/dewego"
+	"apartmenthunter/internal/scraping/companies/gewobag"
+	"apartmenthunter/internal/scraping/companies/howoge"
+	"apartmenthunter/internal/scraping/companies/stadtundland"
+	"apartmenthunter/internal/scraping/companies/wbm"
 	"apartmenthunter/internal/store"
 )
 
@@ -35,6 +36,8 @@ func (f *DefaultScraperFactory) CreateScraper(scraperType string, state *store.S
 		return common.NewBaseScraper(f.httpClient, state, scraperType, gewobag.Scrape)
 	case "StadtUndLand":
 		return common.NewBaseScraper(f.httpClient, state, scraperType, stadtundland.Scrape)
+	case "WBM":
+		return common.NewBaseScraper(f.httpClient, state, scraperType, wbm.Scrape)
 	default:
 		return nil
 	}

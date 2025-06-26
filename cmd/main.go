@@ -19,6 +19,7 @@ var scrapersTypes = []string{
 	"Dewego",
 	"Gewobag",
 	"StadtUndLand",
+	"WBM",
 }
 
 func main() {
