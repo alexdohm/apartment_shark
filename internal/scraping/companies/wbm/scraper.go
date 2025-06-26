@@ -70,7 +70,11 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]WBMListing, error) {
 		rent := extractValue(s, "div.main-property-value.main-property-rent", " €")
 		size := extractValue(s, "div.main-property-value.main-property-size", " m²")
 
-		listingLink := fmt.Sprintf("%s#%s", config.WbmURL, postID)
+		relLink, exists := s.Find("div.btn-holder a").Attr("href")
+		if !exists {
+			log.Println("No WBM listing link found for ", postID)
+		}
+		listingLink := fmt.Sprintf("%s%s", "https://www.wbm.de", relLink)
 
 		listings = append(listings, WBMListing{
 			ID:      postID,
