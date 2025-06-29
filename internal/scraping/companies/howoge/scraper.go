@@ -3,47 +3,29 @@ package howoge
 import (
 	"apartmenthunter/internal/config"
 	"apartmenthunter/internal/scraping/common"
-	"apartmenthunter/internal/telegram"
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
-	"net/url"
-	"strconv"
 )
 
 type scraperCtx struct {
 	*common.BaseScraper
 }
 
-func Scrape(ctx context.Context, base *common.BaseScraper, sendTelegram bool) error {
+func Scrape(ctx context.Context, base *common.BaseScraper) ([]common.Listing, error) {
 	s := scraperCtx{base}
 
 	listings, err := s.fetchListings(ctx)
 	if err != nil {
-		return fmt.Errorf("fetching howoge listings: %w", err)
+		return nil, fmt.Errorf("fetching gewobag listings: %w", err)
 	}
 
-	for _, listing := range listings {
-		telegramStruct := s.convertToTelegramListing(listing)
-
-		if !s.State.Exists(strconv.Itoa(listing.ID)) && listing.Wbs != "ja" {
-			log.Printf("New Howoge post: %d", listing.ID)
-			s.State.MarkAsSeen(strconv.Itoa(listing.ID))
-			if sendTelegram {
-				err := telegram.Send(ctx, telegramStruct)
-				if err != nil {
-					return fmt.Errorf("failed to send howoge post: %w", err)
-				}
-			}
-		}
-	}
-	return nil
+	return listings, nil
 }
 
-func (s *scraperCtx) fetchListings(ctx context.Context) ([]HowogeListing, error) {
+func (s *scraperCtx) fetchListings(ctx context.Context) ([]common.Listing, error) {
 	formData := s.buildFormData()
-	headers := s.HeaderGenerator.GenerateGeneralRequestHeaders("https://www.degewo.de", "https://www.degewo.de", true, false)
+	headers := s.HeaderGenerator.GenerateGeneralRequestHeaders("https://www.howoge.de", "https://www.howoge.de", true, false)
 
 	resp, err := s.HTTPClient.Post(ctx, config.HowogeURL, formData, headers)
 	if err != nil {
@@ -58,7 +40,19 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]HowogeListing, error)
 	if err := json.Unmarshal(resp.Body, &data); err != nil {
 		return nil, fmt.Errorf("error parsing json response: %w", err)
 	}
-	return data.Results, nil
+
+	var listings []common.Listing
+	for _, listing := range data.Results {
+		listings = append(listings, common.Listing{
+			ID:      fmt.Sprintf("%d", listing.ID),
+			Company: "Howoge",
+			Price:   fmt.Sprintf("%.2f", listing.Rent),
+			Size:    fmt.Sprintf("%.2f", listing.Size),
+			Address: listing.Address,
+			URL:     fmt.Sprintf("https://www.howoge.de%s", listing.Link),
+		})
+	}
+	return listings, nil
 }
 
 func (s *scraperCtx) buildFormData() map[string][]string {
@@ -75,19 +69,4 @@ func (s *scraperCtx) buildFormData() map[string][]string {
 		},
 	}
 	return formData
-}
-
-func (s *scraperCtx) convertToTelegramListing(listing HowogeListing) *telegram.TelegramInfo {
-	encodedAddr := url.QueryEscape(listing.Address)
-	mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
-	listingLink := fmt.Sprintf("https://www.howoge.de%s", listing.Link)
-
-	return &telegram.TelegramInfo{
-		Address:     listing.Address,
-		Size:        fmt.Sprintf("%.2f", listing.Size),
-		Rent:        fmt.Sprintf("%.2f", listing.Rent),
-		MapLink:     mapsLink,
-		ListingLink: listingLink,
-		Site:        s.GetName(),
-	}
 }

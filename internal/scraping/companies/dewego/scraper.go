@@ -74,7 +74,7 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]common.Listing, error
 			Price:   rent,
 			Size:    size,
 			Address: fullAddress,
-			URL:     listingLink,
+			URL:     fmt.Sprintf("https://www.degewo.de%s", listingLink),
 		})
 	})
 	return listings, nil
