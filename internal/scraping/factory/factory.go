@@ -3,11 +3,7 @@ package factory
 import (
 	"apartmenthunter/internal/http"
 	"apartmenthunter/internal/scraping/common"
-	"apartmenthunter/internal/scraping/companies/dewego"
 	"apartmenthunter/internal/scraping/companies/gewobag"
-	"apartmenthunter/internal/scraping/companies/howoge"
-	"apartmenthunter/internal/scraping/companies/stadtundland"
-	"apartmenthunter/internal/scraping/companies/wbm"
 	"apartmenthunter/internal/store"
 )
 
@@ -28,16 +24,16 @@ func NewScraperFactory(httpClient http.HTTPClient) *DefaultScraperFactory {
 
 func (f *DefaultScraperFactory) CreateScraper(scraperType string, state *store.ScraperState) common.Scraper {
 	switch scraperType {
-	case "Howoge":
-		return common.NewBaseScraper(f.httpClient, state, scraperType, howoge.Scrape)
-	case "Dewego":
-		return common.NewBaseScraper(f.httpClient, state, scraperType, dewego.Scrape)
+	//case "Howoge":
+	//	return common.NewBaseScraper(f.httpClient, state, scraperType, howoge.Scrape)
+	//case "Dewego":
+	//	return common.NewBaseScraper(f.httpClient, state, scraperType, dewego.Scrape)
 	case "Gewobag":
 		return common.NewBaseScraper(f.httpClient, state, scraperType, gewobag.Scrape)
-	case "StadtUndLand":
-		return common.NewBaseScraper(f.httpClient, state, scraperType, stadtundland.Scrape)
-	case "WBM":
-		return common.NewBaseScraper(f.httpClient, state, scraperType, wbm.Scrape)
+	//case "StadtUndLand":
+	//	return common.NewBaseScraper(f.httpClient, state, scraperType, stadtundland.Scrape)
+	//case "WBM":
+	//	return common.NewBaseScraper(f.httpClient, state, scraperType, wbm.Scrape)
 	default:
 		return nil
 	}

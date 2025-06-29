@@ -9,10 +9,11 @@ import (
 
 type Scraper interface {
 	GetName() string
-	Scrape(ctx context.Context, sendTelegram bool) error
+	Scrape(ctx context.Context) ([]Listing, error)
+	GetState() *store.ScraperState
 }
 
-type ScrapingFunc func(ctx context.Context, scraper *BaseScraper, sendTelegram bool) error
+type ScrapingFunc func(ctx context.Context, scraper *BaseScraper) ([]Listing, error)
 
 type BaseScraper struct {
 	HTTPClient      http.HTTPClient
@@ -36,6 +37,10 @@ func (b *BaseScraper) GetName() string {
 	return b.name
 }
 
-func (b *BaseScraper) Scrape(ctx context.Context, sendTelegram bool) error {
-	return b.scrapingFunc(ctx, b, sendTelegram)
+func (b *BaseScraper) Scrape(ctx context.Context) ([]Listing, error) {
+	return b.scrapingFunc(ctx, b)
+}
+
+func (b *BaseScraper) GetState() *store.ScraperState {
+	return b.State
 }

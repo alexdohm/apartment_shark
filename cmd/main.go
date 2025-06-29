@@ -15,11 +15,11 @@ import (
 )
 
 var scrapersTypes = []string{
-	"Howoge",
-	"Dewego",
+	//"Howoge",
+	//"Dewego",
 	"Gewobag",
-	"StadtUndLand",
-	"WBM",
+	//"StadtUndLand",
+	//"WBM",
 }
 
 func main() {
@@ -37,15 +37,18 @@ func main() {
 		log.Fatalf("error sending startup message: %v", err)
 	}
 
+	// Create telegram notifier for sending listing notifications
+	telegramNotifier := telegram.NewTelegramNotifier(config.BaseURL, config.BotToken, config.ChatID, nil)
+
 	httpClient := http.NewClient(5 * time.Second)
 	scraperFactory := factory.NewScraperFactory(httpClient)
 
-	startAllScrapers(ctx, scraperFactory)
+	startAllScrapers(ctx, scraperFactory, telegramNotifier)
 
 	select {}
 }
 
-func startAllScrapers(ctx context.Context, factory *factory.DefaultScraperFactory) {
+func startAllScrapers(ctx context.Context, factory *factory.DefaultScraperFactory, notifier telegram.Notifier) {
 	var wg sync.WaitGroup
 	for _, scraperType := range scrapersTypes {
 		wg.Add(1)
@@ -59,21 +62,28 @@ func startAllScrapers(ctx context.Context, factory *factory.DefaultScraperFactor
 		// start scraper in its own go routine
 		go func(s common.Scraper) {
 			defer wg.Done()
-			startScraper(ctx, s)
+			startScraper(ctx, s, notifier)
 		}(scraper)
 	}
 }
 
-func startScraper(ctx context.Context, scraper common.Scraper) {
+func startScraper(ctx context.Context, scraper common.Scraper, notifier telegram.Notifier) {
 	name := scraper.GetName()
+	state := scraper.GetState()
 	log.Printf("starting scraper %s", name)
 
-	err := scraper.Scrape(ctx, false)
+	// Initial scrape without notifications - mark existing listings as seen
+	initialListings, err := scraper.Scrape(ctx)
 	if err != nil {
 		log.Printf("error during initial scrape for %s: %v", name, err)
+	} else {
+		for _, listing := range initialListings {
+			log.Printf("%s: Storing initial listing: %s", name, listing.ID)
+			state.MarkAsSeen(listing.ID)
+		}
 	}
 
-	log.Printf("%s scraper initialized", name)
+	log.Printf("%s scraper store initialized", name)
 
 	// start monitoring for new listings
 	for {
@@ -83,9 +93,26 @@ func startScraper(ctx context.Context, scraper common.Scraper) {
 			return
 		default:
 			time.Sleep(bot.GenerateRandomJitterTime())
-			err := scraper.Scrape(ctx, true)
+
+			listings, err := scraper.Scrape(ctx)
 			if err != nil {
 				log.Printf("error during scrape for %s: %v", name, err)
+				continue
+			}
+
+			// Check for new listings and send notifications
+			for _, listing := range listings {
+				if !state.Exists(listing.ID) {
+					log.Printf("New %s listing: %s", name, listing.ID)
+					state.MarkAsSeen(listing.ID)
+
+					// Convert to telegram format and send
+					telegramInfo := listing.ToTelegramInfo()
+					message := telegram.BuildHTML(telegramInfo)
+					if err := notifier.Send(ctx, message); err != nil {
+						log.Printf("failed to send notification for %s: %v", listing.ID, err)
+					}
+				}
 			}
 		}
 	}
