@@ -18,7 +18,7 @@ var scrapersTypes = []string{
 	"Howoge",
 	"Dewego",
 	"Gewobag",
-	//"StadtUndLand",
+	"StadtUndLand",
 	"WBM",
 }
 

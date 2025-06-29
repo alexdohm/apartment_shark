@@ -17,7 +17,7 @@ func Scrape(ctx context.Context, base *common.BaseScraper) ([]common.Listing, er
 
 	listings, err := s.fetchListings(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("fetching gewobag listings: %w", err)
+		return nil, fmt.Errorf("fetching howoge listings: %w", err)
 	}
 
 	return listings, nil
