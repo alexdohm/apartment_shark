@@ -3,3 +3,4 @@ vendor/
 *.exe
 .idea
 app
+.DS_Store
