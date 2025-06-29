@@ -3,12 +3,9 @@ package dewego
 import (
 	"apartmenthunter/internal/config"
 	"apartmenthunter/internal/scraping/common"
-	"apartmenthunter/internal/telegram"
 	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"log"
-	"net/url"
 	"strings"
 )
 
@@ -16,32 +13,18 @@ type scraperCtx struct {
 	*common.BaseScraper
 }
 
-func Scrape(ctx context.Context, base *common.BaseScraper, sendTelegram bool) error {
+func Scrape(ctx context.Context, base *common.BaseScraper) ([]common.Listing, error) {
 	s := scraperCtx{base}
 
 	listings, err := s.fetchListings(ctx)
 	if err != nil {
-		return fmt.Errorf("fetching dewego listings: %w", err)
+		return nil, fmt.Errorf("fetching dewego listings: %w", err)
 	}
 
-	for _, listing := range listings {
-		telegramStruct := s.convertToTelegramListing(listing)
-
-		if !s.State.Exists(listing.ID) {
-			log.Printf("New Dewego post: %s", listing.ID)
-			s.State.MarkAsSeen(listing.ID)
-			if sendTelegram {
-				err := telegram.Send(ctx, telegramStruct)
-				if err != nil {
-					return fmt.Errorf("failed to send howoge post: %w", err)
-				}
-			}
-		}
-	}
-	return nil
+	return listings, nil
 }
 
-func (s *scraperCtx) fetchListings(ctx context.Context) ([]DewegoListing, error) {
+func (s *scraperCtx) fetchListings(ctx context.Context) ([]common.Listing, error) {
 	formData := s.buildFormData()
 	headers := s.HeaderGenerator.GenerateGeneralRequestHeaders("", "", true, false)
 
@@ -54,7 +37,7 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]DewegoListing, error)
 		return nil, fmt.Errorf("HTTP error: status code %d", resp.StatusCode)
 	}
 
-	var listings []DewegoListing
+	var listings []common.Listing
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(resp.Body)))
 	if err != nil {
@@ -85,12 +68,13 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]DewegoListing, error)
 			fmt.Printf("no dewego listing link found for %s", postID)
 		}
 
-		listings = append(listings, DewegoListing{
-			ID:          postID,
-			Address:     fullAddress,
-			Size:        size,
-			Rent:        rent,
-			ListingLink: listingLink,
+		listings = append(listings, common.Listing{
+			ID:      postID,
+			Company: "Dewego",
+			Price:   rent,
+			Size:    size,
+			Address: fullAddress,
+			URL:     listingLink,
 		})
 	})
 	return listings, nil
@@ -115,19 +99,4 @@ func (s *scraperCtx) buildFormData() map[string][]string {
 		},
 	}
 	return formData
-}
-
-func (s *scraperCtx) convertToTelegramListing(listing DewegoListing) *telegram.TelegramInfo {
-	encodedAddr := url.QueryEscape(listing.Address)
-	mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
-	listingLink := fmt.Sprintf("https://www.degewo.de%s", listing.ListingLink)
-
-	return &telegram.TelegramInfo{
-		Address:     listing.Address,
-		Size:        listing.Size,
-		Rent:        listing.Rent,
-		MapLink:     mapsLink,
-		ListingLink: listingLink,
-		Site:        s.GetName(),
-	}
 }
