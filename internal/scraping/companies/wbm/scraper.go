@@ -3,13 +3,11 @@ package wbm
 import (
 	"apartmenthunter/internal/config"
 	"apartmenthunter/internal/scraping/common"
-	"apartmenthunter/internal/telegram"
 	"bytes"
 	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
-	"net/url"
 	"strings"
 )
 
@@ -17,32 +15,18 @@ type scraperCtx struct {
 	*common.BaseScraper
 }
 
-func Scrape(ctx context.Context, base *common.BaseScraper, sendTelegram bool) error {
+func Scrape(ctx context.Context, base *common.BaseScraper) ([]common.Listing, error) {
 	s := scraperCtx{base}
 
 	listings, err := s.fetchListings(ctx)
 	if err != nil {
-		return fmt.Errorf("fetching wbm listings: %w", err)
+		return nil, fmt.Errorf("fetching wbm listings: %w", err)
 	}
 
-	for _, listing := range listings {
-		telegramStruct := s.convertToTelegramListing(listing)
-
-		if !s.State.Exists(listing.ID) {
-			log.Printf("New WBM post: %s", listing.ID)
-			s.State.MarkAsSeen(listing.ID)
-			if sendTelegram {
-				err := telegram.Send(ctx, telegramStruct)
-				if err != nil {
-					return fmt.Errorf("failed to send wbm post: %w", err)
-				}
-			}
-		}
-	}
-	return nil
+	return listings, nil
 }
 
-func (s *scraperCtx) fetchListings(ctx context.Context) ([]WBMListing, error) {
+func (s *scraperCtx) fetchListings(ctx context.Context) ([]common.Listing, error) {
 	headers := s.HeaderGenerator.GenerateGeneralRequestHeaders("", "", false, false)
 
 	resp, err := s.HTTPClient.Get(ctx, config.WbmURL, headers)
@@ -54,7 +38,7 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]WBMListing, error) {
 		return nil, fmt.Errorf("HTTP error: status code %d", resp.StatusCode)
 	}
 
-	var listings []WBMListing
+	var listings []common.Listing
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(resp.Body))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing HTML: %v", err)
@@ -67,7 +51,7 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]WBMListing, error) {
 		}
 
 		address := strings.TrimSpace(s.Find("div.address").Text())
-		rent := extractValue(s, "div.main-property-value.main-property-rent", " €")
+		cost := extractValue(s, "div.main-property-value.main-property-rent", " €")
 		size := extractValue(s, "div.main-property-value.main-property-size", " m²")
 
 		relLink, exists := s.Find("div.btn-holder a").Attr("href")
@@ -76,12 +60,13 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]WBMListing, error) {
 		}
 		listingLink := fmt.Sprintf("%s%s", "https://www.wbm.de", relLink)
 
-		listings = append(listings, WBMListing{
+		listings = append(listings, common.Listing{
 			ID:      postID,
-			Address: address,
+			Company: "WBM",
+			Price:   cost,
 			Size:    size,
-			Rent:    rent,
-			Link:    listingLink,
+			Address: address,
+			URL:     listingLink,
 		})
 	})
 	return listings, nil
@@ -90,18 +75,4 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]WBMListing, error) {
 func extractValue(s *goquery.Selection, selector, suffix string) string {
 	text := strings.TrimSpace(s.Find(selector).Text())
 	return strings.TrimSuffix(text, suffix)
-}
-
-func (s *scraperCtx) convertToTelegramListing(listing WBMListing) *telegram.TelegramInfo {
-	encodedAddr := url.QueryEscape(listing.Address)
-	mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
-
-	return &telegram.TelegramInfo{
-		Address:     listing.Address,
-		Size:        listing.Size,
-		Rent:        listing.Rent,
-		MapLink:     mapsLink,
-		ListingLink: listing.Link,
-		Site:        s.GetName(),
-	}
 }

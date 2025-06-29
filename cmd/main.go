@@ -19,7 +19,7 @@ var scrapersTypes = []string{
 	//"Dewego",
 	"Gewobag",
 	//"StadtUndLand",
-	//"WBM",
+	"WBM",
 }
 
 func main() {
@@ -70,47 +70,47 @@ func startAllScrapers(ctx context.Context, factory *factory.DefaultScraperFactor
 func startScraper(ctx context.Context, scraper common.Scraper, notifier telegram.Notifier) {
 	name := scraper.GetName()
 	state := scraper.GetState()
-	log.Printf("starting scraper %s", name)
+	log.Printf("[%s] starting scraper", name)
 
 	// Initial scrape without notifications - mark existing listings as seen
 	initialListings, err := scraper.Scrape(ctx)
 	if err != nil {
-		log.Printf("error during initial scrape for %s: %v", name, err)
+		log.Printf("[%s] error during initial scrape: %v", name, err)
 	} else {
 		for _, listing := range initialListings {
-			log.Printf("%s: Storing initial listing: %s", name, listing.ID)
+			log.Printf("[%s] Storing initial listing: %s", name, listing.ID)
 			state.MarkAsSeen(listing.ID)
 		}
 	}
 
-	log.Printf("%s scraper store initialized", name)
+	log.Printf("[%s] scraper store initialized", name)
 
 	// start monitoring for new listings
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("%s scraper stopped", name)
+			log.Printf("[%s] scraper stopped", name)
 			return
 		default:
 			time.Sleep(bot.GenerateRandomJitterTime())
 
 			listings, err := scraper.Scrape(ctx)
 			if err != nil {
-				log.Printf("error during scrape for %s: %v", name, err)
+				log.Printf("[%s] Error during scrape: %v", name, err)
 				continue
 			}
 
 			// Check for new listings and send notifications
 			for _, listing := range listings {
 				if !state.Exists(listing.ID) {
-					log.Printf("New %s listing: %s", name, listing.ID)
+					log.Printf("[%s] New listing: %s", name, listing.ID)
 					state.MarkAsSeen(listing.ID)
 
 					// Convert to telegram format and send
 					telegramInfo := listing.ToTelegramInfo()
 					message := telegram.BuildHTML(telegramInfo)
 					if err := notifier.Send(ctx, message); err != nil {
-						log.Printf("failed to send notification for %s: %v", listing.ID, err)
+						log.Printf("[%s] Failed to send notification: %v", listing.ID, err)
 					}
 				}
 			}

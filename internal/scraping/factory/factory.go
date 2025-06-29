@@ -4,6 +4,7 @@ import (
 	"apartmenthunter/internal/http"
 	"apartmenthunter/internal/scraping/common"
 	"apartmenthunter/internal/scraping/companies/gewobag"
+	"apartmenthunter/internal/scraping/companies/wbm"
 	"apartmenthunter/internal/store"
 )
 
@@ -32,8 +33,8 @@ func (f *DefaultScraperFactory) CreateScraper(scraperType string, state *store.S
 		return common.NewBaseScraper(f.httpClient, state, scraperType, gewobag.Scrape)
 	//case "StadtUndLand":
 	//	return common.NewBaseScraper(f.httpClient, state, scraperType, stadtundland.Scrape)
-	//case "WBM":
-	//	return common.NewBaseScraper(f.httpClient, state, scraperType, wbm.Scrape)
+	case "WBM":
+		return common.NewBaseScraper(f.httpClient, state, scraperType, wbm.Scrape)
 	default:
 		return nil
 	}
