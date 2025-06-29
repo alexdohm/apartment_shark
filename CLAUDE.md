@@ -73,11 +73,40 @@ go mod list -m all
 
 ### Scraper System
 
-The application uses a factory pattern where:
-1. `DefaultScraperFactory` creates scrapers for different companies
-2. Each company scraper implements the `common.Scraper` interface
-3. `BaseScraper` provides shared functionality (HTTP client, headers, state)
-4. Company-specific scraping logic is injected as `ScrapingFunc`
+**Architecture (Decoupled Design):**
+The application uses a clean separation pattern:
+1. **Scrapers** - Return standardized `Listing` structs without handling notifications
+2. **Main Orchestration** - Coordinates scrapers, deduplication, and notifications using existing `telegram.Notifier`
+3. **State Management** - Accessed through scraper interface to prevent duplicate notifications
+
+**Implementation:**
+- `DefaultScraperFactory` creates scrapers for different companies
+- Each company scraper implements the `common.Scraper` interface
+- `BaseScraper` provides shared functionality (HTTP client, headers, state)
+- Company-specific scraping logic is injected as `ScrapingFunc`
+
+**Current Interface:**
+```go
+// Scraper interface with state access for deduplication
+type Scraper interface {
+    GetName() string
+    Scrape(ctx context.Context) ([]Listing, error)
+    GetState() *store.ScraperState
+}
+
+// Standardized listing structure
+type Listing struct {
+    ID      string
+    Company string
+    Price   string
+    Size    string
+    Address string
+    URL     string
+}
+
+// Helper method for telegram conversion
+func (l Listing) ToTelegramInfo() *telegram.TelegramInfo
+```
 
 ### Configuration
 
@@ -95,7 +124,38 @@ All configuration is hardcoded in `internal/config/config.go`:
 - `cmd/main.go:17-23` - Enable/disable scrapers by modifying `scrapersTypes` array
 - `internal/config/config.go` - Update search filters, URLs, or Telegram configuration
 - `internal/scraping/companies/*/scraper.go` - Company-specific scraping logic
-- Individual scraper implementations follow the pattern of parsing HTML and extracting listing data
+- `internal/scraping/common/listing.go` - Standardized listing structure and telegram conversion
+
+## Current Implementation Details
+
+**Decoupled Design Implementation:**
+The codebase now implements the clean separation pattern:
+
+**Data Flow:**
+```
+Scrapers → []common.Listing → State Check → telegram.Notifier → Telegram API
+```
+
+**Key Implementation Points:**
+1. **Scrapers** return `[]common.Listing` structs (implemented in `internal/scraping/companies/*/scraper.go`)
+2. **State Management** accessed via `scraper.GetState()` in `cmd/main.go:72`
+3. **Notifications** handled by passing `telegram.Notifier` to `startScraper()` function
+4. **Conversion** from `common.Listing` to `telegram.TelegramInfo` via `listing.ToTelegramInfo()`
+
+**Benefits Achieved:**
+- **Clean Separation**: Scrapers focus solely on data extraction
+- **Testable**: Can mock `telegram.Notifier` interface for unit tests
+- **Extensible**: Easy to add new notification channels without changing scrapers
+- **Maintainable**: Notification logic separated from scraping logic
+
+**Testing:**
+```go
+// Example unit test structure
+func TestScraper(t *testing.T) {
+    mockNotifier := &MockTelegramNotifier{}
+    // Test scraper logic without network calls
+}
+```
 
 ## Production Deployment
 

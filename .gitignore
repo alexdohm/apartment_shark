@@ -2,3 +2,4 @@ bin/
 vendor/
 *.exe
 .idea
+app
