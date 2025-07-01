@@ -9,26 +9,11 @@ import (
 	"strings"
 )
 
-type scraperCtx struct {
-	*common.BaseScraper
-}
+func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.Listing, error) {
+	formData := buildFormData()
+	headers := base.HeaderGenerator.GenerateGeneralRequestHeaders("", "", true, false)
 
-func Scrape(ctx context.Context, base *common.BaseScraper) ([]common.Listing, error) {
-	s := scraperCtx{base}
-
-	listings, err := s.fetchListings(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetching dewego listings: %w", err)
-	}
-
-	return listings, nil
-}
-
-func (s *scraperCtx) fetchListings(ctx context.Context) ([]common.Listing, error) {
-	formData := s.buildFormData()
-	headers := s.HeaderGenerator.GenerateGeneralRequestHeaders("", "", true, false)
-
-	resp, err := s.HTTPClient.Post(ctx, config.DewegoURL, formData, headers)
+	resp, err := base.HTTPClient.Post(ctx, config.DewegoURL, formData, headers)
 	if err != nil {
 		return nil, fmt.Errorf("error making post request: %w", err)
 	}
@@ -80,7 +65,7 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]common.Listing, error
 	return listings, nil
 }
 
-func (s *scraperCtx) buildFormData() map[string][]string {
+func buildFormData() map[string][]string {
 	formData := map[string][]string{
 		"tx_openimmo_immobilie[__referrer][@extension]":  {"Openimmo"},
 		"tx_openimmo_immobilie[__referrer][@controller]": {"Immobilie"},

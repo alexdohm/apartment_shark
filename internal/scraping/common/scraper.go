@@ -5,6 +5,7 @@ import (
 	"apartmenthunter/internal/http"
 	"apartmenthunter/internal/store"
 	"context"
+	"fmt"
 )
 
 type Scraper interface {
@@ -38,7 +39,11 @@ func (b *BaseScraper) GetName() string {
 }
 
 func (b *BaseScraper) Scrape(ctx context.Context) ([]Listing, error) {
-	return b.scrapingFunc(ctx, b)
+	listings, err := b.scrapingFunc(ctx, b)
+	if err != nil {
+		return nil, fmt.Errorf("fetching %s listings: %w", b.name, err)
+	}
+	return listings, nil
 }
 
 func (b *BaseScraper) GetState() *store.ScraperState {

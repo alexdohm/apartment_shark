@@ -11,25 +11,10 @@ import (
 	"strings"
 )
 
-type scraperCtx struct {
-	*common.BaseScraper
-}
+func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.Listing, error) {
+	headers := base.HeaderGenerator.GenerateGeneralRequestHeaders("", "", false, false)
 
-func Scrape(ctx context.Context, base *common.BaseScraper) ([]common.Listing, error) {
-	s := scraperCtx{base}
-
-	listings, err := s.fetchListings(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetching gewobag listings: %w", err)
-	}
-
-	return listings, nil
-}
-
-func (s *scraperCtx) fetchListings(ctx context.Context) ([]common.Listing, error) {
-	headers := s.HeaderGenerator.GenerateGeneralRequestHeaders("", "", false, false)
-
-	resp, err := s.HTTPClient.Get(ctx, config.GewobagURL, headers)
+	resp, err := base.HTTPClient.Get(ctx, config.GewobagURL, headers)
 	if err != nil {
 		return nil, fmt.Errorf("error making get request: %w", err)
 	}

@@ -10,26 +10,11 @@ import (
 	"net/url"
 )
 
-type scraperCtx struct {
-	*common.BaseScraper
-}
+func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.Listing, error) {
+	formData := buildFormData()
+	headers := base.HeaderGenerator.GenerateGeneralRequestHeaders("", "", false, true)
 
-func Scrape(ctx context.Context, base *common.BaseScraper) ([]common.Listing, error) {
-	s := scraperCtx{base}
-
-	listings, err := s.fetchListings(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetching gewobag listings: %w", err)
-	}
-
-	return listings, nil
-}
-
-func (s *scraperCtx) fetchListings(ctx context.Context) ([]common.Listing, error) {
-	formData := s.buildFormData()
-	headers := s.HeaderGenerator.GenerateGeneralRequestHeaders("", "", false, true)
-
-	resp, err := s.HTTPClient.PostJSON(ctx, config.StadtUndLandURL, formData, headers)
+	resp, err := base.HTTPClient.PostJSON(ctx, config.StadtUndLandURL, formData, headers)
 	if err != nil {
 		return nil, fmt.Errorf("error making post request: %w", err)
 	}
@@ -58,7 +43,7 @@ func (s *scraperCtx) fetchListings(ctx context.Context) ([]common.Listing, error
 	return listings, nil
 }
 
-func (s *scraperCtx) buildFormData() []byte {
+func buildFormData() []byte {
 	formData := map[string]interface{}{
 		"offset": 0,
 		"cat":    "wohnung",

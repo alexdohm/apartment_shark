@@ -29,15 +29,15 @@ func NewScraperFactory(httpClient http.HTTPClient) *DefaultScraperFactory {
 func (f *DefaultScraperFactory) CreateScraper(scraperType string, state *store.ScraperState) common.Scraper {
 	switch scraperType {
 	case "Howoge":
-		return common.NewBaseScraper(f.httpClient, state, scraperType, howoge.Scrape)
+		return common.NewBaseScraper(f.httpClient, state, scraperType, howoge.FetchListings)
 	case "Dewego":
-		return common.NewBaseScraper(f.httpClient, state, scraperType, dewego.Scrape)
+		return common.NewBaseScraper(f.httpClient, state, scraperType, dewego.FetchListings)
 	case "Gewobag":
-		return common.NewBaseScraper(f.httpClient, state, scraperType, gewobag.Scrape)
+		return common.NewBaseScraper(f.httpClient, state, scraperType, gewobag.FetchListings)
 	case "StadtUndLand":
-		return common.NewBaseScraper(f.httpClient, state, scraperType, stadtundland.Scrape)
+		return common.NewBaseScraper(f.httpClient, state, scraperType, stadtundland.FetchListings)
 	case "WBM":
-		return common.NewBaseScraper(f.httpClient, state, scraperType, wbm.Scrape)
+		return common.NewBaseScraper(f.httpClient, state, scraperType, wbm.FetchListings)
 	default:
 		return nil
 	}
