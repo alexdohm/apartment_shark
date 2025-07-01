@@ -5,100 +5,6 @@ import (
 	"testing"
 )
 
-func TestBuildHTML(t *testing.T) {
-	tests := []struct {
-		name     string
-		info     *TelegramInfo
-		site     string
-		expected string
-	}{
-		{
-			name: "standard apartment listing",
-			info: &TelegramInfo{
-				Address:     "Kienitzer Str. 24, 12053 Berlin",
-				Size:        "65",
-				Rent:        "800",
-				MapLink:     "https://www.google.com/maps/place/Kienitzer+Str.+24,+12053+Berlin/",
-				ListingLink: "google.com",
-				Site:        "StadtUndLand",
-			},
-			expected: `<b>StadtUndLand Listing</b>
-
-<b>Address:</b> Kienitzer Str. 24, 12053 Berlin
-<b>Size:</b> 65 m²
-<b>Rent:</b> 800 €
-
-<a href="https://www.google.com/maps/place/Kienitzer+Str.+24,+12053+Berlin/">View Map</a>
-
-<a href="google.com">View Listing</a>`,
-		},
-		{
-			name: "empty values",
-			info: &TelegramInfo{
-				Address:     "",
-				Size:        "",
-				Rent:        "",
-				MapLink:     "",
-				ListingLink: "",
-				Site:        "Test",
-			},
-			expected: `<b>Test Listing</b>
-
-<b>Address:</b> 
-<b>Size:</b>  m²
-<b>Rent:</b>  €
-
-<a href="">View Map</a>
-
-<a href="">View Listing</a>`,
-		},
-		{
-			name: "special characters in address",
-			info: &TelegramInfo{
-				Address:     "Käthe Str. 24, 12053 Berlin",
-				Size:        "65",
-				Rent:        "800",
-				MapLink:     "https://www.google.com/maps/place/Kienitzer+Str.+24,+12053+Berlin/",
-				ListingLink: "google.com",
-				Site:        "Gewobag",
-			},
-			expected: `<b>Gewobag Listing</b>
-
-<b>Address:</b> Käthe Str. 24, 12053 Berlin
-<b>Size:</b> 65 m²
-<b>Rent:</b> 800 €
-
-<a href="https://www.google.com/maps/place/Kienitzer+Str.+24,+12053+Berlin/">View Map</a>
-
-<a href="google.com">View Listing</a>`,
-		},
-		{
-			name:     "nil info struct",
-			info:     nil, // this will cause site to panic
-			expected: ``,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.info == nil {
-				defer func() {
-					if r := recover(); r == nil {
-						t.Errorf("BuildHTML() should panic with nil info, but didnt")
-					}
-				}()
-				BuildHTML(tt.info)
-				return
-			}
-
-			result := BuildHTML(tt.info)
-			if result != tt.expected {
-				t.Errorf("BuildHTML() mismatch:\nGot\n%s\n\nExpected\n%s\n", result, tt.expected)
-			}
-		})
-	}
-}
-
 func TestBuildHTML_ContainsExpectedElements(t *testing.T) {
 	info := &TelegramInfo{
 		Address:     "Test",
@@ -152,6 +58,67 @@ func TestBuildHTML_HTMLStructure(t *testing.T) {
 	}
 }
 
+func TestBuildHTML_Fallbacks(t *testing.T) {
+	tests := []struct {
+		name     string
+		info     *TelegramInfo
+		expected string
+	}{
+		{
+			name:     "nil info",
+			info:     nil,
+			expected: "Data not provided",
+		},
+		{
+			name: "all empty fields",
+			info: &TelegramInfo{
+				Address:     "",
+				Size:        "",
+				Rent:        "",
+				MapLink:     "",
+				ListingLink: "",
+				Site:        "",
+			},
+			expected: `<b> Listing</b>
+
+  <b>Address:</b> -
+  <b>Size:</b> - m²
+  <b>Rent:</b> - €
+
+  <a href="#">View Map</a>
+  <a href="#">View Listing</a>`,
+		},
+		{
+			name: "partial data with fallbacks",
+			info: &TelegramInfo{
+				Address:     "Test Street 123",
+				Size:        "",
+				Rent:        "800",
+				MapLink:     "",
+				ListingLink: "https://example.com",
+				Site:        "",
+			},
+			expected: `<b> Listing</b>
+
+  <b>Address:</b> Test Street 123
+  <b>Size:</b> - m²
+  <b>Rent:</b> 800 €
+
+  <a href="#">View Map</a>
+  <a href="https://example.com">View Listing</a>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := BuildHTML(tt.info)
+			if result != tt.expected {
+				t.Errorf("BuildHTML() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
 func BenchmarkBuildHTML(b *testing.B) {
 	info := &TelegramInfo{
 		Address:     "Test Addy",
@@ -166,5 +133,4 @@ func BenchmarkBuildHTML(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		BuildHTML(info)
 	}
-
 }

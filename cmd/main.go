@@ -25,30 +25,28 @@ var scrapersTypes = []string{
 func main() {
 	log.Println("starting apartment project")
 
-	if err := telegram.Init(config.BaseURL, config.BotToken, config.ChatID); err != nil {
-		log.Fatalf("error initializing telegram: %v", err)
+	telegramClient, err := telegram.NewClient(config.BaseURL, config.BotToken, config.ChatID)
+	if err != nil {
+		log.Fatalf("error initializing telegram client: %v", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	htmlMsg := "<b>Apartment Hunter</b> is <i>running...</i>"
-	if err := telegram.SendStartup(ctx, htmlMsg); err != nil {
+	if err := telegramClient.SendStartup(ctx, htmlMsg); err != nil {
 		log.Fatalf("error sending startup message: %v", err)
 	}
-
-	// Create telegram notifier for sending listing notifications
-	telegramNotifier := telegram.NewTelegramNotifier(config.BaseURL, config.BotToken, config.ChatID, nil)
 
 	httpClient := http.NewClient(5 * time.Second)
 	scraperFactory := factory.NewScraperFactory(httpClient)
 
-	startAllScrapers(ctx, scraperFactory, telegramNotifier)
+	startAllScrapers(ctx, scraperFactory, telegramClient)
 
 	select {}
 }
 
-func startAllScrapers(ctx context.Context, factory *factory.DefaultScraperFactory, notifier telegram.Notifier) {
+func startAllScrapers(ctx context.Context, factory *factory.DefaultScraperFactory, client *telegram.Client) {
 	var wg sync.WaitGroup
 	for _, scraperType := range scrapersTypes {
 		wg.Add(1)
@@ -62,12 +60,12 @@ func startAllScrapers(ctx context.Context, factory *factory.DefaultScraperFactor
 		// start scraper in its own go routine
 		go func(s common.Scraper) {
 			defer wg.Done()
-			startScraper(ctx, s, notifier)
+			startScraper(ctx, s, client)
 		}(scraper)
 	}
 }
 
-func startScraper(ctx context.Context, scraper common.Scraper, notifier telegram.Notifier) {
+func startScraper(ctx context.Context, scraper common.Scraper, client *telegram.Client) {
 	name := scraper.GetName()
 	state := scraper.GetState()
 	log.Printf("[%s] starting scraper", name)
@@ -108,8 +106,7 @@ func startScraper(ctx context.Context, scraper common.Scraper, notifier telegram
 
 					// Convert to telegram format and send
 					telegramInfo := listing.ToTelegramInfo()
-					message := telegram.BuildHTML(telegramInfo)
-					if err := notifier.Send(ctx, message); err != nil {
+					if err := client.SendListing(ctx, telegramInfo); err != nil {
 						log.Printf("[%s] Failed to send notification: %v", listing.ID, err)
 					}
 				}

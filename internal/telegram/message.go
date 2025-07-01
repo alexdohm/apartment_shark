@@ -9,6 +9,37 @@ type TelegramInfo struct {
 }
 
 func BuildHTML(info *TelegramInfo) string {
+	if info == nil {
+		return "Data not provided"
+	}
+
+	address := info.Address
+	if address == "" {
+		address = "-"
+	}
+
+	size := info.Size
+	if size == "" {
+		size = "-"
+	}
+
+	rent := info.Rent
+	if rent == "" {
+		rent = "-"
+	}
+
+	site := info.Site
+
+	mapLink := info.MapLink
+	if mapLink == "" {
+		mapLink = "#"
+	}
+
+	listingLink := info.ListingLink
+	if listingLink == "" {
+		listingLink = "#"
+	}
+
 	return fmt.Sprintf(`<b>%s Listing</b>
 
 <b>Address:</b> %s
@@ -17,7 +48,6 @@ func BuildHTML(info *TelegramInfo) string {
 
 <a href="%s">View Map</a>
 <a href="%s">View Listing</a>`,
-
-		info.Site, info.Address, info.Size, info.Rent, info.MapLink, info.ListingLink,
+		site, address, size, rent, mapLink, listingLink,
 	)
 }
