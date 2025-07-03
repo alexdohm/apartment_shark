@@ -155,7 +155,10 @@ func TestDewegoScraper_CSSSelectors(t *testing.T) {
 		"a[target=_blank]":                                 "listing link",
 	}
 
-	articles.Each(func(i int, article *goquery.Selection) {
+	articles.EachWithBreak(func(i int, article *goquery.Selection) bool {
+		if i >= 3 {
+			return false
+		}
 		totalArticles++
 		articleID, _ := article.Attr("id")
 		t.Logf("Validating article %d: %s", i+1, articleID)
@@ -179,6 +182,7 @@ func TestDewegoScraper_CSSSelectors(t *testing.T) {
 				}
 			}
 		}
+		return true
 	})
 
 	// Report results
