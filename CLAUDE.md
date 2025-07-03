@@ -22,15 +22,29 @@ GOOS=linux GOARCH=amd64 go build -o app .
 
 ### Testing
 ```bash
-# Run all tests
+# Run all tests (unit tests only)
 go test ./...
 
 # Run tests for specific package
 go test ./internal/telegram
 go test ./internal/store
+go test ./internal/scraping/common
 
 # Run tests with verbose output
 go test -v ./...
+
+# Run integration tests (real endpoint testing)
+go test -tags=integration ./internal/scraping/companies/dewego
+go test -tags=integration ./internal/scraping/companies/howoge
+go test -tags=integration ./internal/scraping/companies/gewobag
+go test -tags=integration ./internal/scraping/companies/stadtundland
+go test -tags=integration ./internal/scraping/companies/wbm
+
+# Run integration tests with timeout (recommended)
+go test -tags=integration -timeout=60s ./internal/scraping/companies/...
+
+# Skip integration tests (default behavior)
+go test -short ./...
 ```
 
 ### Dependencies
@@ -73,40 +87,21 @@ go mod list -m all
 
 ### Scraper System
 
-**Architecture (Decoupled Design):**
+**Architecture (Function-Based Design):**
 The application uses a clean separation pattern:
-1. **Scrapers** - Return standardized `Listing` structs without handling notifications
-2. **Main Orchestration** - Coordinates scrapers, deduplication, and notifications using existing `telegram.Notifier`
+1. **Scrapers** - Return standardized `Listing` structs via standalone `FetchListings` functions
+2. **Main Orchestration** - Coordinates scrapers, deduplication, and notifications using `telegram.Client`
 3. **State Management** - Accessed through scraper interface to prevent duplicate notifications
 
 **Implementation:**
-- `DefaultScraperFactory` creates scrapers for different companies
-- Each company scraper implements the `common.Scraper` interface
-- `BaseScraper` provides shared functionality (HTTP client, headers, state)
-- Company-specific scraping logic is injected as `ScrapingFunc`
+- `DefaultScraperFactory` creates `BaseScraper` instances for different companies
+- Each company implements a `FetchListings(ctx, *BaseScraper) ([]Listing, error)` function
+- `BaseScraper` provides shared functionality (HTTP client, headers, state) and handles error formatting
+- Company-specific scraping logic is contained in standalone functions
 
-**Current Interface:**
-```go
-// Scraper interface with state access for deduplication
-type Scraper interface {
-    GetName() string
-    Scrape(ctx context.Context) ([]Listing, error)
-    GetState() *store.ScraperState
-}
-
-// Standardized listing structure
-type Listing struct {
-    ID      string
-    Company string
-    Price   string
-    Size    string
-    Address string
-    URL     string
-}
-
-// Helper method for telegram conversion
-func (l Listing) ToTelegramInfo() *telegram.TelegramInfo
-```
+**Scraper Types by Technology:**
+- **HTML Scrapers**: Dewego, Gewobag, WBM (use goquery for CSS selector-based parsing)
+- **JSON API Scrapers**: Howoge (form POST → JSON), Stadt Und Land (JSON POST → JSON)
 
 ### Configuration
 
@@ -119,43 +114,48 @@ All configuration is hardcoded in `internal/config/config.go`:
 
 `internal/store/ScraperState` maintains in-memory tracking of processed listings to prevent duplicate notifications. State is not persisted between application restarts.
 
+### Testing Architecture
+
+**Unit Tests** - Test business logic with mocks:
+- `internal/scraping/common/*_test.go` - Core scraping logic
+- `internal/telegram/*_test.go` - Telegram client functionality
+- Use HTTP mocks from `internal/http/mock/`
+
+**Integration Tests** - Test against real endpoints (with build tags):
+- `internal/scraping/companies/*/scraper_test.go` - Real endpoint validation
+- Run with `go test -tags=integration`
+- Test endpoint reachability, HTML/JSON structure, and CSS selectors/API fields
+
 ## Key Files for Modifications
 
 - `cmd/main.go:17-23` - Enable/disable scrapers by modifying `scrapersTypes` array
 - `internal/config/config.go` - Update search filters, URLs, or Telegram configuration
-- `internal/scraping/companies/*/scraper.go` - Company-specific scraping logic
+- `internal/scraping/companies/*/scraper.go` - Company-specific `FetchListings` functions
 - `internal/scraping/common/listing.go` - Standardized listing structure and telegram conversion
+- `internal/telegram/client.go` - Telegram client (replaces old notifier/send separation)
 
-## Current Implementation Details
+## Implementation Patterns
 
-**Decoupled Design Implementation:**
-The codebase now implements the clean separation pattern:
+**Scraper Function Structure:**
+All company scrapers follow the same pattern in their `FetchListings` function:
+1. Build request parameters (form data or JSON)
+2. Make HTTP request via `base.HTTPClient`
+3. Parse response (HTML with goquery or JSON unmarshaling)
+4. Extract and normalize listing data
+5. Return `[]common.Listing` structs
 
 **Data Flow:**
 ```
-Scrapers → []common.Listing → State Check → telegram.Notifier → Telegram API
+FetchListings → []common.Listing → BaseScraper.Scrape (error formatting) → State Check → telegram.Client → Telegram API
 ```
 
-**Key Implementation Points:**
-1. **Scrapers** return `[]common.Listing` structs (implemented in `internal/scraping/companies/*/scraper.go`)
-2. **State Management** accessed via `scraper.GetState()` in `cmd/main.go:72`
-3. **Notifications** handled by passing `telegram.Notifier` to `startScraper()` function
-4. **Conversion** from `common.Listing` to `telegram.TelegramInfo` via `listing.ToTelegramInfo()`
+**Error Handling:**
+- `BaseScraper.Scrape()` wraps company function errors with standardized format
+- Integration tests validate endpoint changes don't break scrapers
+- State management prevents duplicate notifications
 
-**Benefits Achieved:**
-- **Clean Separation**: Scrapers focus solely on data extraction
-- **Testable**: Can mock `telegram.Notifier` interface for unit tests
-- **Extensible**: Easy to add new notification channels without changing scrapers
-- **Maintainable**: Notification logic separated from scraping logic
-
-**Testing:**
-```go
-// Example unit test structure
-func TestScraper(t *testing.T) {
-    mockNotifier := &MockTelegramNotifier{}
-    // Test scraper logic without network calls
-}
-```
+**Pagination Support:**
+Some scrapers (like Dewego) implement pagination to retrieve all available listings across multiple pages with controlled delays between requests.
 
 ## Production Deployment
 
