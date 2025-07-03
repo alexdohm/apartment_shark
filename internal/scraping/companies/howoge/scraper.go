@@ -46,12 +46,12 @@ func buildFormData() map[string][]string {
 		"tx_howrealestate_json_list[page]":   {"1"},
 		"tx_howrealestate_json_list[limit]":  {"50"},
 		"tx_howrealestate_json_list[lang]":   {""},
-		"tx_howrealestate_json_list[kiez][]": {
-			"Friedrichshain-Kreuzberg",
-			"Neukölln",
-			"Tempelhof-Schöneberg",
-			"Treptow-Köpenick",
-		},
+		//"tx_howrealestate_json_list[kiez][]": {
+		//	"Friedrichshain-Kreuzberg",
+		//	"Neukölln",
+		//	"Tempelhof-Schöneberg",
+		//	"Treptow-Köpenick",
+		//},
 	}
 	return formData
 }
