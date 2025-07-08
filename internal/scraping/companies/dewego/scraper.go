@@ -141,16 +141,6 @@ func buildFormData() map[string][]string {
 		"tx_openimmo_immobilie[__referrer][@action]":     {"search"},
 		"tx_openimmo_immobilie[search]":                  {"search"},
 		"tx_openimmo_immobilie[page]":                    {"1"},
-		//"tx_openimmo_immobilie[sortBy]":    {"immobilie_preise_warmmiete"},
-		//"tx_openimmo_immobilie[sortOrder]": {"asc"},
-		//"tx_openimmo_immobilie[warmmiete_start]":         {"600"},
-		//"tx_openimmo_immobilie[warmmiete_end]":           {"1000"},
-		//"tx_openimmo_immobilie[wbsSozialwohnung]":        {"0"},
-		//"tx_openimmo_immobilie[distance]":                {"1"},
-		//"tx_openimmo_immobilie[regionalerZusatz][]": {
-		//	"Friedrichshain-Kreuzberg",
-		//	"neukolln",
-		//},
 	}
 	return formData
 }

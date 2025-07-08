@@ -32,11 +32,17 @@ func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.List
 	doc.Find("article[id^=post-]").Each(func(i int, s *goquery.Selection) {
 		postID, _ := s.Attr("id")
 
+		title := strings.TrimSpace(s.Find("tr.angebot-address td h3.angebot-title").Text())
+		isWbs := common.FilterWBSString(title)
 		addressText := strings.TrimSpace(s.Find("tr.angebot-address td address").Text())
+		zip, ok := common.ExtractZIP(addressText)
+		if !ok {
+			log.Println("Error extracting zip", addressText)
+		}
 		area := strings.TrimSpace(s.Find("tr.angebot-area td").Text())
 		size, ok := extractSize(area)
 		if !ok {
-			log.Println("Error extracting size", area)
+			log.Println("[Gewobag] Error extracting size", area)
 		}
 
 		cost := strings.TrimSpace(s.Find("tr.angebot-kosten td").Text())
@@ -49,12 +55,14 @@ func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.List
 		}
 
 		listings = append(listings, common.Listing{
-			ID:      postID,
-			Company: "Gewobag",
-			Price:   cost,
-			Size:    size,
-			Address: addressText,
-			URL:     listingLink,
+			ID:          postID,
+			Company:     "Gewobag",
+			Price:       cost,
+			Size:        size,
+			Address:     addressText,
+			URL:         listingLink,
+			WbsRequired: isWbs,
+			ZipCode:     zip,
 		})
 	})
 	return listings, nil

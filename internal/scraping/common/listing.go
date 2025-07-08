@@ -7,12 +7,14 @@ import (
 )
 
 type Listing struct {
-	ID      string
-	Company string
-	Price   string
-	Size    string
-	Address string
-	URL     string
+	ID          string
+	Company     string
+	Price       string
+	Size        string
+	Address     string
+	URL         string
+	ZipCode     string
+	WbsRequired bool
 }
 
 func (l Listing) ToTelegramInfo() *telegram.TelegramInfo {
