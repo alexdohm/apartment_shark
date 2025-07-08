@@ -106,6 +106,7 @@ func parseListings(doc *goquery.Document) []common.Listing {
 			neighborhood = strings.TrimSpace(addressParts[1])
 		}
 
+		title := strings.TrimSpace(s.Find("h2.article__title").Text())
 		fullAddress := fmt.Sprintf("%s, %s, Berlin", street, neighborhood)
 
 		sizeText := strings.TrimSpace(s.Find("ul.article__properties li:nth-child(2) span.text").Text())
@@ -122,12 +123,13 @@ func parseListings(doc *goquery.Document) []common.Listing {
 		}
 
 		listings = append(listings, common.Listing{
-			ID:      postID,
-			Company: "Dewego",
-			Price:   rent,
-			Size:    size,
-			Address: fullAddress,
-			URL:     listingLink,
+			ID:          postID,
+			Company:     "Dewego",
+			Price:       rent,
+			Size:        size,
+			Address:     fullAddress,
+			URL:         listingLink,
+			WbsRequired: common.FilterWBSString(title),
 		})
 	})
 
@@ -135,6 +137,8 @@ func parseListings(doc *goquery.Document) []common.Listing {
 }
 
 func buildFormData() map[string][]string {
+	// todo - a neighborhood needs to be selected here instead of a zip code
+
 	formData := map[string][]string{
 		"tx_openimmo_immobilie[__referrer][@extension]":  {"Openimmo"},
 		"tx_openimmo_immobilie[__referrer][@controller]": {"Immobilie"},
