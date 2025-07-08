@@ -2,6 +2,7 @@ package common
 
 import (
 	"apartmenthunter/internal/telegram"
+	"apartmenthunter/internal/users"
 	"strings"
 	"testing"
 )
@@ -227,5 +228,403 @@ func TestListing_ToTelegramInfo_FieldMapping(t *testing.T) {
 	// Verify MapLink contains the address
 	if !strings.Contains(result.MapLink, "Field+Test+Address") {
 		t.Errorf("MapLink should contain encoded address, got %q", result.MapLink)
+	}
+}
+
+// TestListing_MatchUserConfig tests the user configuration matching functionality
+func TestListing_MatchUserConfig(t *testing.T) {
+	tests := []struct {
+		name       string
+		listing    Listing
+		userConfig users.UserConfig
+		expected   bool
+	}{
+		{
+			name: "perfect match - all criteria met",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: true,
+				Price:       "800",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043", "12045"},
+				WbsRequired: true,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+		{
+			name: "zip code mismatch",
+			listing: Listing{
+				ZipCode:     "10115",
+				WbsRequired: true,
+				Price:       "800",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043", "12045"},
+				WbsRequired: true,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: false,
+		},
+		{
+			name: "WBS requirement not met",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: true,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: false,
+		},
+		{
+			name: "WBS not required by user, listing has WBS",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: true,
+				Price:       "800",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+		{
+			name: "price too low",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "400",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: false,
+		},
+		{
+			name: "price too high",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "1200",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: false,
+		},
+		{
+			name: "size too small",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "40",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: false,
+		},
+		{
+			name: "size too large",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "80",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: false,
+		},
+		{
+			name: "no zip code restrictions",
+			listing: Listing{
+				ZipCode:     "99999",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+		{
+			name: "no price restrictions",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "2000",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    0,
+				MaxPrice:    0,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+		{
+			name: "no size restrictions",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "200",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      0,
+				MaxSqm:      0,
+			},
+			expected: true,
+		},
+		{
+			name: "price with decimal values",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "799.50",
+				Size:        "60.5",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+		{
+			name: "price with currency symbol",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "€800",
+				Size:        "60 qm",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+		{
+			name: "unparseable price",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "auf Anfrage",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: false,
+		},
+		{
+			name: "unparseable size",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "variabel",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: false,
+		},
+		{
+			name: "only minimum price set",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "600",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    0,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+		{
+			name: "only maximum price set",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    0,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+		{
+			name: "only minimum size set",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      0,
+			},
+			expected: true,
+		},
+		{
+			name: "only maximum size set",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      0,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+		{
+			name: "empty zip code in listing",
+			listing: Listing{
+				ZipCode:     "",
+				WbsRequired: false,
+				Price:       "800",
+				Size:        "60",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: false,
+		},
+		{
+			name: "complex price string with multiple numbers",
+			listing: Listing{
+				ZipCode:     "12043",
+				WbsRequired: false,
+				Price:       "Kaltmiete: 750€, Nebenkosten: 150€",
+				Size:        "60.5 qm",
+			},
+			userConfig: users.UserConfig{
+				ZipCodes:    []string{"12043"},
+				WbsRequired: false,
+				MinPrice:    500,
+				MaxPrice:    1000,
+				MinSqm:      50,
+				MaxSqm:      70,
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.listing.MatchUserConfig(&tt.userConfig)
+			if result != tt.expected {
+				t.Errorf("MatchUserConfig() = %v, want %v", result, tt.expected)
+			}
+		})
 	}
 }
