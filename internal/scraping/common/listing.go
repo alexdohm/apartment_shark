@@ -20,6 +20,7 @@ type Listing struct {
 	WbsRequired bool
 }
 
+// ToTelegramInfo converts a listing to telegram struct
 func (l Listing) ToTelegramInfo() *telegram.TelegramInfo {
 	encodedAddr := url.QueryEscape(l.Address)
 	mapsLink := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s", encodedAddr)
