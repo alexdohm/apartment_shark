@@ -37,7 +37,9 @@ func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.List
 			Size:    listing.Details.Area,
 			Address: fmt.Sprintf("%s %s, %s %s",
 				listing.Address.Street, listing.Address.HouseNumber, listing.Address.PostalCode, listing.Address.City),
-			URL: fmt.Sprintf("https://stadtundland.de/wohnungssuche/%s", url.QueryEscape(listing.Details.Id)),
+			URL:         fmt.Sprintf("https://stadtundland.de/wohnungssuche/%s", url.QueryEscape(listing.Details.Id)),
+			ZipCode:     listing.Address.PostalCode,
+			WbsRequired: common.FilterWBSString(listing.Title),
 		})
 	}
 	return listings, nil
