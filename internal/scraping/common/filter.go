@@ -1,22 +1,16 @@
 package common
 
 import (
+	"apartmenthunter/internal/users"
 	"regexp"
 	"strings"
 )
 
-type UserConfig struct {
-	UserID      string
-	ZipCodes    []string
-	WbsRequired bool
-	MinSqm      int
-	MaxSqm      int
-	MinPrice    int
-	MaxPrice    int
-}
-
-type FilterConfig struct {
-	Users []UserConfig
+func SendNotification(listing Listing, config *users.FilterConfig) bool {
+	if listing.MatchUserConfig(&config.Users[0]) {
+		return true
+	}
+	return false
 }
 
 func FilterWBSString(title string) bool {

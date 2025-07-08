@@ -17,7 +17,7 @@ const (
 	StadtUndLandURL = "https://d2396ha8oiavw0.cloudfront.net/sul-main/immoSearch"
 )
 
-// search filters
+// search filters for individual
 var (
 	ZipCodes = []string{
 		"12043", "12045", "12047", "12049", "12051", "12053", "12055", "12059", // nk
@@ -26,8 +26,9 @@ var (
 		"12435", // alt-treptow
 		"10179", // mitte
 	}
-	MinWarm = 600.0
-	MaxWarm = 1000.0
-	MinSqm  = 50.0
+	MinWarm = 400
+	MaxWarm = 1000
+	MinSqm  = 50
+	MaxSqm  = 80
 	Wbs     = false
 )

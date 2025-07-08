@@ -8,6 +8,7 @@ import (
 	"apartmenthunter/internal/scraping/factory"
 	"apartmenthunter/internal/store"
 	"apartmenthunter/internal/telegram"
+	"apartmenthunter/internal/users"
 	"context"
 	"log"
 	"sync"
@@ -16,10 +17,10 @@ import (
 
 var scrapersTypes = []string{
 	"Howoge",
-	//"Dewego",
-	//"Gewobag",
-	//"StadtUndLand",
-	//"WBM",
+	"Dewego",
+	"Gewobag",
+	"StadtUndLand",
+	"WBM",
 }
 
 func main() {
@@ -68,6 +69,7 @@ func startAllScrapers(ctx context.Context, factory *factory.DefaultScraperFactor
 func startScraper(ctx context.Context, scraper common.Scraper, client *telegram.Client) {
 	name := scraper.GetName()
 	state := scraper.GetState()
+	allUsers := users.LoadFromStaticConfig()
 	log.Printf("[%s] starting scraper", name)
 
 	// Initial scrape without notifications - mark existing listings as seen
@@ -104,10 +106,13 @@ func startScraper(ctx context.Context, scraper common.Scraper, client *telegram.
 					log.Printf("[%s] New listing: %s", name, listing.ID)
 					state.MarkAsSeen(listing.ID)
 
-					// Convert to telegram format and send
-					telegramInfo := listing.ToTelegramInfo()
-					if err := client.SendListing(ctx, telegramInfo); err != nil {
-						log.Printf("[%s] Failed to send notification: %v", listing.ID, err)
+					// todo figure out how filtering works with telegram
+					if common.SendNotification(listing, allUsers) {
+						// Convert to telegram format and send
+						telegramInfo := listing.ToTelegramInfo()
+						if err := client.SendListing(ctx, telegramInfo); err != nil {
+							log.Printf("[%s] Failed to send notification: %v", listing.ID, err)
+						}
 					}
 				}
 			}
