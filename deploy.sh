@@ -7,7 +7,7 @@ IMAGE_NAME="d.isotronic.de/project/apartmenthunter"
 TAG="latest"
 
 echo "Building Go binary..."
-GOOS=linux GOARCH=amd64 go build -o app .
+GOOS=linux GOARCH=amd64 go build -o app ./cmd
 
 echo "Building Docker image..."
 docker build -t "$IMAGE_NAME:$TAG" .

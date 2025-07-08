@@ -7,7 +7,7 @@ RUN go mod download
 COPY . .
 
 # build the go binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app ./cmd
 
 
 FROM alpine:latest
