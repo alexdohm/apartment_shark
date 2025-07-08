@@ -36,6 +36,12 @@ func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.List
 		}
 
 		address := strings.TrimSpace(s.Find("div.address").Text())
+		zip, ok := common.ExtractZIP(address)
+		if !ok {
+			log.Println("Error extracting zip", address)
+		}
+		title := strings.TrimSpace(s.Find("h2.imageTitle").Text())
+
 		cost := extractValue(s, "div.main-property-value.main-property-rent", " €")
 		size := extractValue(s, "div.main-property-value.main-property-size", " m²")
 
@@ -46,12 +52,14 @@ func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.List
 		listingLink := fmt.Sprintf("%s%s", "https://www.wbm.de", relLink)
 
 		listings = append(listings, common.Listing{
-			ID:      postID,
-			Company: "WBM",
-			Price:   cost,
-			Size:    size,
-			Address: address,
-			URL:     listingLink,
+			ID:          postID,
+			Company:     "WBM",
+			Price:       cost,
+			Size:        size,
+			Address:     address,
+			URL:         listingLink,
+			ZipCode:     zip,
+			WbsRequired: common.FilterWBSString(title), // todo this might not work here
 		})
 	})
 	return listings, nil

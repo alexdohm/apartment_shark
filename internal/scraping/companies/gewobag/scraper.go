@@ -34,10 +34,10 @@ func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.List
 
 		title := strings.TrimSpace(s.Find("tr.angebot-address td h3.angebot-title").Text())
 		isWbs := common.FilterWBSString(title)
-		addressText := strings.TrimSpace(s.Find("tr.angebot-address td address").Text())
-		zip, ok := common.ExtractZIP(addressText)
+		address := strings.TrimSpace(s.Find("tr.angebot-address td address").Text())
+		zip, ok := common.ExtractZIP(address)
 		if !ok {
-			log.Println("Error extracting zip", addressText)
+			log.Println("Error extracting zip", address)
 		}
 		area := strings.TrimSpace(s.Find("tr.angebot-area td").Text())
 		size, ok := extractSize(area)
@@ -59,7 +59,7 @@ func FetchListings(ctx context.Context, base *common.BaseScraper) ([]common.List
 			Company:     "Gewobag",
 			Price:       cost,
 			Size:        size,
-			Address:     addressText,
+			Address:     address,
 			URL:         listingLink,
 			WbsRequired: isWbs,
 			ZipCode:     zip,
