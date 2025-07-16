@@ -108,6 +108,8 @@ func startScraper(ctx context.Context, scraper common.Scraper, client *telegram.
 
 					// todo figure out how filtering works with telegram
 					if common.SendNotification(listing, allUsers) {
+						log.Printf("[%s] FILTER MATCH Sending Listing: %s", name, listing.ID)
+
 						// Convert to telegram format and send
 						telegramInfo := listing.ToTelegramInfo()
 						if err := client.SendListing(ctx, telegramInfo); err != nil {

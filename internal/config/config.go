@@ -28,7 +28,7 @@ var (
 	}
 	MinWarm = 400
 	MaxWarm = 1000
-	MinSqm  = 50
+	MinSqm  = 40
 	MaxSqm  = 80
 	Wbs     = false
 )
