@@ -10,7 +10,9 @@ import (
 	"apartmenthunter/internal/telegram"
 	"apartmenthunter/internal/users"
 	"context"
+	"github.com/joho/godotenv"
 	"log"
+	"os"
 	"sync"
 	"time"
 )
@@ -23,10 +25,20 @@ var scrapersTypes = []string{
 	"WBM",
 }
 
+func init() {
+	pwd, _ := os.Getwd()
+	log.Printf("Current working directory: %s\n", pwd)
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("Warning: Error loading .env file: %v", err)
+	}
+}
+
 func main() {
 	log.Println("starting apartment project")
 
-	telegramClient, err := telegram.NewClient(config.BaseURL, config.BotToken, config.ChatID)
+	telegramClient, err := telegram.NewClient(config.BaseURL, os.Getenv("TELEGRAM_BOT_TOKEN"), os.Getenv("TELEGRAM_CHAT_ID"))
 	if err != nil {
 		log.Fatalf("error initializing telegram client: %v", err)
 	}

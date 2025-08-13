@@ -1,11 +1,16 @@
 package config
 
+import "os"
+
 // telegram bot config
+var (
+	BotToken = os.Getenv("TELEGRAM_BOT_TOKEN")
+	ChatID   = os.Getenv("TELEGRAM_CHAT_ID")
+)
+
 const (
-	BaseURL          = "https://api.telegram.org"
-	BotToken         = "7533179845:AAGS2FEsvPzyjwpdshzP2dTs3ctelCKcM80"
-	ChatID           = "1392436626"
 	TimeBetweenCalls = 20
+	BaseURL          = "https://api.telegram.org"
 )
 
 // state urls
